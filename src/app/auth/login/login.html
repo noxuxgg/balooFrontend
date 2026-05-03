@@ -1,1 +1,21 @@
 <h1>Ingresar</h1>
+
+<form [formGroup]="loginForm">
+    <label for="usuario">Ingrese Usuario:</label>
+    <input type="text" formControlName="nombreUsuario">
+    <br>
+    <label for="contrasenia">Ingrese contraseña:</label>
+    <input type="password" formControlName="contrasenia">
+    <br>
+    <button type="button" [disabled]="!loginForm.valid" (click)="funLogin()">Ingresar</button>
+</form>
+<hr>
+@if(!loginForm.controls.nombreUsuario.errors){
+    <div>
+        <small>El nombre de usuario no es válido</small>
+    </div>
+}
+
+{{ loginForm.value | json }}
+<hr>
+<h4>ES VÁLIDO?: {{ loginForm.valid }}</h4>

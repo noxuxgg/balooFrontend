@@ -1,0 +1,24 @@
+<h1>GESTIÓN USUARIOS</h1>
+{{ usuarios() }}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>NOMBRE</th>
+            <th>CORREO</th>
+            <th>CREADO EN</th>
+            <th>ACCION</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (usuario of usuarios(); track $index) {
+            <tr>
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.id }}</td>
+            </tr>
+        }
+    </tbody>
+</table>
