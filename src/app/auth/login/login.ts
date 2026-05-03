@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -7,5 +10,28 @@ import { Component } from '@angular/core';
   styleUrl: './login.scss',
 })
 export class Login {
+  loginForm = new FormGroup({
+    nombreUsuario: new FormControl('', [Validators.required, Validators.minLength(6), Validators.maxLength(30)]),
+    contrasenia: new FormControl('', [Validators.required, Validators.minLength(6), Validators.maxLength(30)])
+  });
 
+  authService = inject(AuthService);
+
+  router = inject(Router);
+
+  funLogin(){
+    this.authService.funConectarConBackendLogin(this.loginForm.value).subscribe(
+      (res: any) =>{
+        console.log(res);
+        localStorage.setItem("access_token", res.access_token)
+        this.router.navigate(['/admin/usuarios']);
+        alert('Bienvenido...');
+      },
+      (error) => {
+        console.log(error);
+        this.router.navigate(['/'])
+        alert('ERROR');
+      }
+    );
+  }
 }
