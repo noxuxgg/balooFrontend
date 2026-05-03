@@ -1,23 +1,27 @@
 <h1>GESTIÓN USUARIOS</h1>
-{{ usuarios() }}
-<table>
+<form [formGroup]="usuarioForm">
+    <label for="">Ingrese Nombre: </label>
+    <input type="text" formControlName="nombreUsuario">
+    <br>
+    <label for="">Ingrese Contraseña: </label>
+    <input type="password" formControlName="contrasenia">
+    <br>
+    <button (click)="guardarUsuario()" >Registrar Usuario</button>
+</form>
+<table border="1">
     <thead>
         <tr>
             <th>ID</th>
             <th>NOMBRE</th>
-            <th>CORREO</th>
-            <th>CREADO EN</th>
-            <th>ACCION</th>
+            <th>ACCIONES</th>
         </tr>
     </thead>
     <tbody>
         @for (usuario of usuarios(); track $index) {
             <tr>
-                <td>{{ usuario.id }}</td>
-                <td>{{ usuario.id }}</td>
-                <td>{{ usuario.id }}</td>
-                <td>{{ usuario.id }}</td>
-                <td>{{ usuario.id }}</td>
+                <td>{{ $index+1 }}</td>
+                <td>{{ usuario.nombreUsuario }}</td>
+                <td><button>Crear</button><button (click)="editarUsuario(usuario)">CONFIRMAR</button><button (click)="mostrarUsuario(usuario)">Editar</button></td>
             </tr>
         }
     </tbody>

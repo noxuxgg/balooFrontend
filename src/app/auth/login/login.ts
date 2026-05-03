@@ -29,7 +29,6 @@ export class Login {
       },
       (error) => {
         console.log(error);
-        this.router.navigate(['/'])
         alert('ERROR');
       }
     );
