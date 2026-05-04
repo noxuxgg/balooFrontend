@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { ProductoService } from '../../core/services/productos.service';
 import { CategoriaService } from '../../core/services/categorias.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -10,26 +10,44 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
   templateUrl: './productos.html',
 })
 export class Productos {
+  soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
   productoService = inject(ProductoService);
   categoriaService = inject(CategoriaService);
 
   productos = signal<any>([]);
   categorias = signal<any>([]);
   
+  // Control de Modal e IDs
+
+  
   isOpen = false;
   idProductoSeleccionado = "";
   idCategoriaSeleccionada = "";
 
-  // Solo los datos que el usuario llena
+  // Paginación de Productos
+  paginaActualProd = signal(1);
+  itemsPorPagina = 5;
+  
+  // Paginación de Categorías
+  paginaActualCat = signal(1);
+  itemsPorPaginaCat = 3;
+
+  // Formulario Producto: Todo obligatorio, precio > 0
   productoForm = new FormGroup({
-    nombre: new FormControl('', [Validators.required]),
-    precio: new FormControl(0, [Validators.required, Validators.min(1)]),
+    nombre: new FormControl('', [
+      Validators.required, 
+      Validators.pattern(this.soloLetras) // No permite números
+    ]),
+    precio: new FormControl<number | null>(null, [Validators.required, Validators.min(0.1)]),
     categoriaId: new FormControl('', [Validators.required])
   });
 
   categoriaForm = new FormGroup({
-    nombre: new FormControl('', [Validators.required]),
-    descripcion: new FormControl('', [Validators.required])
+    nombre: new FormControl('', [
+      Validators.required, 
+      Validators.pattern(this.soloLetras) // No permite números
+    ]),
+    descripcion: new FormControl('') 
   });
 
   constructor() { this.listarTodo(); }
@@ -39,12 +57,43 @@ export class Productos {
     this.categoriaService.funListar().subscribe((res: any) => this.categorias.set(res));
   }
 
+  // --- LÓGICA DE PAGINACIÓN FRONTEND ---
+  productosPaginados = computed(() => {
+    const inicio = (this.paginaActualProd() - 1) * this.itemsPorPagina;
+    const fin = inicio + this.itemsPorPagina;
+    return this.productos().slice(inicio, fin);
+  });
+
+  categoriasPaginadas = computed(() => {
+    const inicio = (this.paginaActualCat() - 1) * this.itemsPorPaginaCat;
+    const fin = inicio + this.itemsPorPaginaCat;
+    return this.categorias().slice(inicio, fin);
+  });
+
+  totalPaginasProd = computed(() => Math.ceil(this.productos().length / this.itemsPorPagina));
+  totalPaginasCat = computed(() => Math.ceil(this.categorias().length / this.itemsPorPaginaCat));
+
+  // --- MÉTODOS PRODUCTOS ---
   guardarProducto() {
-    const datos = this.productoForm.value;
+    // Si el formulario es inválido, marcamos todo como 'touched' para mostrar los errores en rojo
+    if (this.productoForm.invalid) {
+      this.productoForm.markAllAsTouched();
+      // Opcional: puedes lanzar un alert simple si quieres un aviso extra
+      alert('Por favor, completa todos los campos requeridos correctamente.');
+      return;
+    }
+
+    const formValues = this.productoForm.value;
+    const datosEnvio: any = {
+      nombre: formValues.nombre ?? '',
+      precio: Number(formValues.precio),
+      categoriaId: Number(formValues.categoriaId)
+    };
+
     if (this.idProductoSeleccionado) {
-      this.productoService.funEditarProducto(datos as any, Number(this.idProductoSeleccionado)).subscribe(() => this.resetProd());
+      this.productoService.funEditarProducto(datosEnvio, Number(this.idProductoSeleccionado)).subscribe(() => this.resetProd());
     } else {
-      this.productoService.funGuardarProducto(datos as any).subscribe(() => this.resetProd());
+      this.productoService.funGuardarProducto(datosEnvio).subscribe(() => this.resetProd());
     }
   }
 
@@ -62,9 +111,22 @@ export class Productos {
     this.isOpen = true;
   }
 
-  resetProd() { this.listarTodo(); this.productoForm.reset(); this.idProductoSeleccionado = ""; this.isOpen = false; }
+  resetProd() { 
+    this.listarTodo(); 
+    this.productoForm.reset(); 
+    this.idProductoSeleccionado = ""; 
+    this.isOpen = false; 
+    this.paginaActualProd.set(1);
+  }
 
+  // --- MÉTODOS CATEGORÍAS ---
   guardarCategoria() {
+    if (this.categoriaForm.invalid) {
+      this.categoriaForm.markAllAsTouched();
+      alert('El nombre de la categoría es obligatorio y no debe tener números.');
+      return;
+    }
+
     const datos = this.categoriaForm.value;
     if (this.idCategoriaSeleccionada) {
       this.categoriaService.funEditar(datos as any, Number(this.idCategoriaSeleccionada)).subscribe(() => this.resetCat());
@@ -85,5 +147,10 @@ export class Productos {
     });
   }
 
-  resetCat() { this.listarTodo(); this.categoriaForm.reset(); this.idCategoriaSeleccionada = ""; }
+  resetCat() { 
+    this.listarTodo(); 
+    this.categoriaForm.reset(); 
+    this.idCategoriaSeleccionada = ""; 
+    this.paginaActualCat.set(1);
+  }
 }
