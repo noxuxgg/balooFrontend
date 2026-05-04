@@ -2,11 +2,12 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { ProductoService } from '../../core/services/productos.service';
 import { CategoriaService } from '../../core/services/categorias.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { JsonPipe } from '@angular/common';
 
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, JsonPipe],
   templateUrl: './productos.html',
 })
 export class Productos {
@@ -75,25 +76,41 @@ export class Productos {
 
   // --- MÉTODOS PRODUCTOS ---
   guardarProducto() {
-    // Si el formulario es inválido, marcamos todo como 'touched' para mostrar los errores en rojo
     if (this.productoForm.invalid) {
       this.productoForm.markAllAsTouched();
-      // Opcional: puedes lanzar un alert simple si quieres un aviso extra
       alert('Por favor, completa todos los campos requeridos correctamente.');
       return;
     }
 
     const formValues = this.productoForm.value;
-    const datosEnvio: any = {
+    
+    // ASEGURAMOS LA CONVERSIÓN: El select suele devolver string "1", necesitamos number 1
+    const datosEnvio = {
       nombre: formValues.nombre ?? '',
       precio: Number(formValues.precio),
-      categoriaId: Number(formValues.categoriaId)
+      // Si en tu backend la propiedad se llama categoriaId, déjalo así. 
+      // Si usas la entidad completa, asegúrate de que el backend lo reciba correctamente.
+      categoriaId: Number(formValues.categoriaId) 
     };
 
+    // DEBUG EN CONSOLA: Para que veas exactamente qué sale hacia el service
+    console.log('Enviando a backend:', datosEnvio);
+
     if (this.idProductoSeleccionado) {
-      this.productoService.funEditarProducto(datosEnvio, Number(this.idProductoSeleccionado)).subscribe(() => this.resetProd());
+      this.productoService.funEditarProducto(datosEnvio, Number(this.idProductoSeleccionado))
+        .subscribe({
+          next: () => this.resetProd(),
+          error: (err) => console.error('Error al editar:', err)
+        });
     } else {
-      this.productoService.funGuardarProducto(datosEnvio).subscribe(() => this.resetProd());
+      this.productoService.funGuardarProducto(datosEnvio)
+        .subscribe({
+          next: () => this.resetProd(),
+          error: (err) => {
+            alert('Error al guardar. Revisa la consola.');
+            console.error('Error al guardar:', err);
+          }
+        });
     }
   }
 
