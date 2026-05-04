@@ -10,88 +10,80 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
   templateUrl: './productos.html',
 })
 export class Productos {
-  // Inyección de servicios
   productoService = inject(ProductoService);
   categoriaService = inject(CategoriaService);
 
-  // Signals para las listas
   productos = signal<any>([]);
   categorias = signal<any>([]);
   
   isOpen = false;
   idProductoSeleccionado = "";
+  idCategoriaSeleccionada = "";
 
-  // Formulario de Productos (Campos de tu DB: nombre, precio, categoriaId)
+  // Solo los datos que el usuario llena
   productoForm = new FormGroup({
     nombre: new FormControl('', [Validators.required]),
     precio: new FormControl(0, [Validators.required, Validators.min(1)]),
     categoriaId: new FormControl('', [Validators.required])
   });
 
-  // Formulario de Categorías (Integrado)
   categoriaForm = new FormGroup({
     nombre: new FormControl('', [Validators.required]),
     descripcion: new FormControl('', [Validators.required])
   });
 
-  constructor() {
-    this.listarTodo();
-  }
+  constructor() { this.listarTodo(); }
 
   listarTodo() {
-    this.productoService.funListarProductos().subscribe((res: any) => {
-      this.productos.set(res);
-    });
-    this.categoriaService.funListar().subscribe((res: any) => {
-      this.categorias.set(res);
-    });
+    this.productoService.funListarProductos().subscribe((res: any) => this.productos.set(res));
+    this.categoriaService.funListar().subscribe((res: any) => this.categorias.set(res));
   }
 
   guardarProducto() {
-    const datos = {
-      nombre: this.productoForm.value.nombre || '',
-      precio: Number(this.productoForm.value.precio) || 0,
-      categoriaId: Number(this.productoForm.value.categoriaId) || 0
-    };
-
+    const datos = this.productoForm.value;
     if (this.idProductoSeleccionado) {
-      this.productoService.funEditarProducto(datos as any, Number(this.idProductoSeleccionado)).subscribe(() => {
-        this.finalizarAccionProducto();
-      });
+      this.productoService.funEditarProducto(datos as any, Number(this.idProductoSeleccionado)).subscribe(() => this.resetProd());
     } else {
-      this.productoService.funGuardarProducto(datos as any).subscribe(() => {
-        this.finalizarAccionProducto();
-      });
+      this.productoService.funGuardarProducto(datos as any).subscribe(() => this.resetProd());
     }
   }
 
-  finalizarAccionProducto() {
-    this.listarTodo();
-    this.productoForm.reset();
-    this.idProductoSeleccionado = "";
-    this.isOpen = false;
-  }
-
-  guardarCategoria() {
-    const datos = {
-      nombre: this.categoriaForm.value.nombre || '',
-      descripcion: this.categoriaForm.value.descripcion || ''
-    };
-
-    this.categoriaService.funGuardar(datos).subscribe(() => {
-      this.listarTodo(); // Actualiza el select de categorías inmediatamente
-      this.categoriaForm.reset();
-      alert('Categoría creada con éxito');
-    });
+  eliminarProducto(id: number) {
+    if (confirm('¿Eliminar producto?')) this.productoService.funEliminarProducto(id).subscribe(() => this.listarTodo());
   }
 
   mostrarProducto(datos: any) {
+    this.idProductoSeleccionado = datos.id;
     this.productoForm.patchValue({
       nombre: datos.nombre,
       precio: datos.precio,
       categoriaId: datos.categoriaId
     });
-    this.idProductoSeleccionado = datos.id;
     this.isOpen = true;
   }
+
+  resetProd() { this.listarTodo(); this.productoForm.reset(); this.idProductoSeleccionado = ""; this.isOpen = false; }
+
+  guardarCategoria() {
+    const datos = this.categoriaForm.value;
+    if (this.idCategoriaSeleccionada) {
+      this.categoriaService.funEditar(datos as any, Number(this.idCategoriaSeleccionada)).subscribe(() => this.resetCat());
+    } else {
+      this.categoriaService.funGuardar(datos as any).subscribe(() => this.resetCat());
+    }
+  }
+
+  eliminarCategoria(id: number) {
+    if (confirm('¿Eliminar categoría?')) this.categoriaService.funEliminar(id).subscribe(() => this.listarTodo());
+  }
+
+  mostrarCategoria(cat: any) {
+    this.idCategoriaSeleccionada = cat.id;
+    this.categoriaForm.patchValue({
+      nombre: cat.nombre,
+      descripcion: cat.descripcion
+    });
+  }
+
+  resetCat() { this.listarTodo(); this.categoriaForm.reset(); this.idCategoriaSeleccionada = ""; }
 }
