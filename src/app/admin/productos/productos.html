@@ -1,1 +1,100 @@
-<p>productos works!</p>
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Inventario de Productos - Baloo</h2>
+    <!-- Botón con el color #013924 -->
+    <button (click)="isOpen = true" class="bg-[#013924] hover:opacity-90 text-white px-4 py-2 rounded-md transition-all shadow-lg">
+      + Nuevo Producto / Categoría
+    </button>
+  </div>
+
+  <!-- Tabla de Productos -->
+  <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-100">
+    <table class="w-full text-left border-collapse">
+      <thead class="bg-[#013924] text-white">
+        <tr>
+          <th class="p-3 border-b border-white/10 font-medium">Nombre</th>
+          <th class="p-3 border-b border-white/10 font-medium">Precio (Bs)</th>
+          <th class="p-3 border-b border-white/10 font-medium">Categoría</th>
+          <th class="p-3 border-b border-white/10 font-medium text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (prod of productos(); track prod.id) {
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="p-3 border-b">{{ prod.nombre }}</td>
+            <td class="p-3 border-b font-semibold text-[#013924]">{{ prod.precio }}</td>
+            <td class="p-3 border-b">
+                <span class="px-2 py-1 bg-gray-100 text-xs rounded-full text-gray-600">
+                    {{ prod.categoria?.nombre || 'Sin categoría' }}
+                </span>
+            </td>
+            <td class="p-3 border-b text-center">
+              <button (click)="mostrarProducto(prod)" class="text-[#013924] font-bold hover:underline mr-3">Editar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal -->
+  @if (isOpen) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+          <h3 class="text-xl font-bold text-[#013924]">
+            {{ idProductoSeleccionado ? 'Editar Producto' : 'Nuevo Producto' }}
+          </h3>
+          <button (click)="isOpen = false" class="text-gray-400 hover:text-black text-2xl">&times;</button>
+        </div>
+
+        <!-- Formulario de Producto -->
+        <form [formGroup]="productoForm" (ngSubmit)="guardarProducto()" class="mb-8 p-5 bg-gray-50 rounded-xl border border-gray-200 shadow-inner">
+          <h4 class="font-bold text-[#013924] mb-4 flex items-center gap-2">
+            <span class="w-2 h-4 bg-[#013924] rounded-full"></span> Datos del Producto
+          </h4>
+          <div class="grid gap-4">
+            <input formControlName="nombre" type="text" placeholder="Nombre del producto" class="w-full border-gray-300 focus:ring-2 focus:ring-[#013924] focus:border-[#013924] p-2.5 rounded-lg outline-none transition-all">
+            
+            <div class="flex gap-3">
+              <div class="w-1/2">
+                  <label class="text-xs text-gray-500 ml-1">Precio (Bs)</label>
+                  <input formControlName="precio" type="number" class="w-full border-gray-300 focus:ring-2 focus:ring-[#013924] focus:border-[#013924] p-2.5 rounded-lg outline-none">
+              </div>
+              
+              <div class="w-1/2">
+                  <label class="text-xs text-gray-500 ml-1">Categoría</label>
+                  <select formControlName="categoriaId" class="w-full border-gray-300 focus:ring-2 focus:ring-[#013924] focus:border-[#013924] p-2.5 rounded-lg outline-none">
+                    <option value="">Seleccionar...</option>
+                    @for (cat of categorias(); track cat.id) {
+                      <option [value]="cat.id">{{ cat.nombre }}</option>
+                    }
+                  </select>
+              </div>
+            </div>
+            <button type="submit" [disabled]="productoForm.invalid" class="w-full bg-[#013924] disabled:bg-gray-400 text-white py-3 rounded-lg font-bold mt-2 shadow-md hover:shadow-lg active:scale-[0.98] transition-all">
+              {{ idProductoSeleccionado ? 'ACTUALIZAR PRODUCTO' : 'GUARDAR PRODUCTO' }}
+            </button>
+          </div>
+        </form>
+
+        <!-- Formulario de Categoría Rápido -->
+        <form [formGroup]="categoriaForm" (ngSubmit)="guardarCategoria()" class="p-4 border border-dashed border-[#013924]/30 rounded-lg bg-emerald-50/30">
+          <h4 class="font-bold text-gray-700 mb-3">¿Falta una categoría?</h4>
+          <div class="grid gap-3">
+            <input formControlName="nombre" type="text" placeholder="Nombre de categoría" class="w-full border-gray-200 focus:border-[#013924] p-2 rounded-md outline-none text-sm">
+            <button type="submit" [disabled]="categoriaForm.invalid" class="w-full border-2 border-[#013924] text-[#013924] hover:bg-[#013924] hover:text-white py-2 rounded-md font-bold transition-colors text-sm">
+              CREAR CATEGORÍA
+            </button>
+          </div>
+        </form>
+
+        <div class="flex justify-center pt-6">
+          <button (click)="isOpen = false" class="text-gray-400 hover:text-red-500 text-sm font-medium transition-colors">Cancelar y cerrar ventana</button>
+        </div>
+        
+      </div>
+    </div>
+  }
+</div>
