@@ -7,5 +7,5 @@ import { Component } from '@angular/core';
   styleUrl: './sucursales.scss',
 })
 export class Sucursales {
-
+  isOpen = false; 
 }

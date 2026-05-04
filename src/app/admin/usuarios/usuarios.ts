@@ -27,11 +27,14 @@ export class Usuarios {
       (res: any) => {
         this.usuarios.set(res)
       }
-    )
+    ) 
   }
 
   guardarUsuario() {
-    const usuarioDato = { nombreUsuario: this.usuarioForm.value.nombreUsuario || '', contrasenia: this.usuarioForm.value.contrasenia || '' };
+    const usuarioDato = { 
+      nombreUsuario: this.usuarioForm.value.nombreUsuario || '', 
+      contrasenia: this.usuarioForm.value.contrasenia || '' 
+    };
     this.userService.funGuardar(usuarioDato).subscribe(
       (res: any) => {
         this.listar()
@@ -52,7 +55,6 @@ export class Usuarios {
 
     const datosActualizados = {
       nombreUsuario: this.usuarioForm.value.nombreUsuario || '',
-      // Si el usuario escribió algo en el campo contraseña, se envía; si no, se envía vacío o nulo
       contrasenia: this.usuarioForm.value.contrasenia || ''
     };
 
