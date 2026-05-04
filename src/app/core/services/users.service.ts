@@ -15,6 +15,10 @@ export class UsersService {
     return this.http.get(`${this.urlBase}/usuarios`);
   }
 
+  funListarUno(id: string){
+    return this.http.get(`${this.urlBase}/usuarios/${id}`);
+  }
+
   funGuardar(dato: Usuario){
     return this.http.post(`${this.urlBase}/usuarios`, dato);
   }
@@ -25,5 +29,5 @@ export class UsersService {
 
   funEliminar(id: string){
     return this.http.delete(`${this.urlBase}/usuarios/${id}`);
-  }
+  } 
 }
