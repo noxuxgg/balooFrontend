@@ -1,1 +1,25 @@
-<p>sucursales works!</p>
+<button (click)="isOpen = true" class="bg-blue-600 text-white px-4 py-2 rounded-md">
+  Abrir Moasasasasdal
+</button>
+
+@if (isOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+      
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold">Detalles del Producto</h3>
+        <button (click)="isOpen = false" class="text-gray-500 text-2xl">&times;</button>
+      </div>
+
+      <div class="mb-6">
+        <p>Aquí puedes poner tus inputs o el contenido que necesites.</p>
+      </div> 
+
+      <div class="flex justify-end gap-2">
+        <button (click)="isOpen = false" class="px-4 py-2 border rounded-md">Cerrar</button>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-md">Guardar</button>
+      </div>
+      
+    </div>
+  </div>
+}

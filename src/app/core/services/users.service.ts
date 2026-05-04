@@ -1,11 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment.development';
+import { Usuario } from '../interfaces/usuario';
 
-export interface Usuario{
-  nombreUsuario: string,
-  contrasenia: string
-}
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +20,10 @@ export class UsersService {
   }
 
   funEditar(dato: Usuario, id: string){
-    return this.http.patch(`${this.urlBase}/usuarios/${id}`, dato)
+    return this.http.patch(`${this.urlBase}/usuarios/${id}`, dato);
+  }
+
+  funEliminar(id: string){
+    return this.http.delete(`${this.urlBase}/usuarios/${id}`);
   }
 }

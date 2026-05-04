@@ -1,13 +1,15 @@
 <h1>GESTIÓN USUARIOS</h1>
 <form [formGroup]="usuarioForm">
     <label for="">Ingrese Nombre: </label>
-    <input type="text" formControlName="nombreUsuario">
+    <input type="email" formControlName="nombreUsuario">
     <br>
     <label for="">Ingrese Contraseña: </label>
     <input type="password" formControlName="contrasenia">
     <br>
     <button (click)="guardarUsuario()" >Registrar Usuario</button>
 </form>
+
+
 <table border="1">
     <thead>
         <tr>
@@ -21,8 +23,8 @@
             <tr>
                 <td>{{ $index+1 }}</td>
                 <td>{{ usuario.nombreUsuario }}</td>
-                <td><button>Crear</button><button (click)="editarUsuario(usuario)">CONFIRMAR</button><button (click)="mostrarUsuario(usuario)">Editar</button></td>
+                <td><button (click)="editarUsuario(usuario)">CONFIRMAR</button><button (click)="mostrarUsuario(usuario)">Editar</button></td>
             </tr>
         }
     </tbody>
-</table>
+</table> 
