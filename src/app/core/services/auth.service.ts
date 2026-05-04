@@ -15,7 +15,7 @@ export class AuthService {
   }
 
   funGetPerfil(){
-    return this.http.get(`${this.urlBase}/usuarios`)
-  }
+    return this.http.get(`${this.urlBase}/auth/profile`)
+  } 
 
 }

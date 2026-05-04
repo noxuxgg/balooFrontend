@@ -23,7 +23,7 @@ export class Login {
     this.authService.funConectarConBackendLogin(this.loginForm.value).subscribe(
       (res: any) =>{
         console.log(res);
-        localStorage.setItem("access_token", res.access_token)
+        localStorage.setItem("access_token", res.access_token);
         this.router.navigate(['/admin/usuarios']);
         alert('Bienvenido...');
       },

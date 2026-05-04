@@ -22,7 +22,7 @@ export class Usuarios {
     this.listar();
   }
 
-  listar() {
+  listar() { 
     this.userService.funListar().subscribe(
       (res: any) => {
         this.usuarios.set(res)
