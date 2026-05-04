@@ -1,30 +1,143 @@
-<h1>GESTIÓN USUARIOS</h1>
-<form [formGroup]="usuarioForm">
-    <label for="">Ingrese Nombre: </label>
-    <input type="email" formControlName="nombreUsuario">
-    <br>
-    <label for="">Ingrese Contraseña: </label>
-    <input type="password" formControlName="contrasenia">
-    <br>
-    <button (click)="guardarUsuario()" >Registrar Usuario</button>
-</form>
+<div class="p-6 max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-[#013924] tracking-tight">GESTIÓN DE USUARIOS</h2>
+        <button (click)="isOpen.set(true)"
+            class="bg-[#0E432F] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-all">
+            + NUEVO USUARIO
+        </button>
+    </div>
 
+    <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 mb-10">
+        <table class="w-full text-left">
+            <thead class="bg-[#0E432F] text-white text-xs uppercase tracking-widest">
+                <tr>
+                    <th class="p-5 text-center">Usuario</th>
+                    <th class="p-5 text-center">Rol</th>
+                    <th class="p-5 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @for (usuario of usuarios(); track $index) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-5 font-semibold text-gray-700">{{ usuario.nombreUsuario }}</td>
+                    <td class="p-5 text-center font-bold text-[#013924]">{{ usuario.roles?.[0]?.nombre }}</td>
+                    <td class="p-5 text-center">
+                        <button (click)="isOpen.set(true)" class="hover:scale-125 transition-transform px-2"
+                            (click)="listarUnoForm(usuario.id)">✏️</button>
+                        <button (click)="usuarioEliminar(usuario.id)"
+                            class="hover:scale-125 transition-transform px-2">🗑️</button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-<table border="1">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>NOMBRE</th>
-            <th>ACCIONES</th>
-        </tr>
-    </thead>
-    <tbody>
-        @for (usuario of usuarios(); track $index) {
-            <tr>
-                <td>{{ $index+1 }}</td>
-                <td>{{ usuario.nombreUsuario }}</td>
-                <td><button (click)="editarUsuario(usuario)">CONFIRMAR</button><button (click)="mostrarUsuario(usuario)">Editar</button></td>
-            </tr>
-        }
-    </tbody>
-</table> 
+    @if (isOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
+        <div
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 overflow-y-auto max-h-[90vh] border border-gray-100">
+
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-xl font-black text-[#013924] uppercase">
+                    {{ idUsuarioSeleccionado ? 'Editar Usuario' : 'Nuevo Usuario' }}
+                </h3>
+                <button (click)="cerrarModal()"
+                    class="text-gray-300 hover:text-red-500 text-3xl transition-colors">&times;</button>
+            </div>
+
+            <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="space-y-6 mb-10">
+                <div class="relative">
+                    <label
+                        class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-2 bg-white px-1">Nombre</label>
+                    <input formControlName="nombreUsuario" type="text"
+                        class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all">
+                    @if (usuarioForm.get('nombreUsuario')?.invalid && usuarioForm.get('nombreUsuario')?.touched) {
+                    <span class="text-[10px] text-red-500 font-bold mt-1 ml-2">
+                        @if (usuarioForm.get('nombreUsuario')?.errors?.['required']) { El nombre es obligatorio }
+                        @if (usuarioForm.get('nombreUsuario')?.errors?.['minlength']) { Mínimo 4 caracteres }
+                        @if (usuarioForm.get('nombreUsuario')?.errors?.['pattern']) { No se permiten solo espacios }
+                    </span>
+                    }
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <label
+                            class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-2 bg-white px-1">Contraseña</label>
+                        <input formControlName="contrasenia" type="text"
+                            class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none">
+                        @if (usuarioForm.get('contrasenia')?.invalid && usuarioForm.get('contrasenia')?.touched) {
+                        <span class="text-[10px] text-red-500 font-bold mt-1 ml-2">
+                            @if (usuarioForm.get('contrasenia')?.errors?.['required']) { La contraseña es obligatoria }
+                            @if (usuarioForm.get('contrasenia')?.errors?.['minlength']) { Mínimo 6 caracteres }
+                            @if (usuarioForm.get('contrasenia')?.errors?.['pattern']) { No se permiten solo espacios }
+                        </span>
+                        }
+                    </div>
+                    <div class="relative">
+                        <label
+                            class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-2 bg-white px-1">Rol</label>
+                        <select formControlName="roles"
+                            class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none appearance-none">
+                            <option value="" disabled selected hidden>Elegir...</option>
+                            @for (rol of roles(); track $index) {
+                            <option [value]="rol.id">{{ rol.nombre }}</option>
+                            }
+                        </select>
+                        @if (usuarioForm.get('roles')?.invalid && usuarioForm.get('roles')?.touched) {
+                        <span class="text-[10px] text-red-500 font-bold mt-1 ml-2">
+                            @if (usuarioForm.get('roles')?.errors?.['required']) { El rol es
+                            obligatorio }
+                        </span>
+                        }
+                    </div>
+                </div>
+
+                @if (errorServidor()) {
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl animate-pulse">
+                    <div class="flex items-center">
+                        <span class="text-red-500 mr-2">⚠️</span>
+                        <p class="text-red-700 text-xs font-bold uppercase tracking-tight">
+                            {{ errorServidor() }}
+                        </p>
+                    </div>
+                </div>
+                }
+                <button type="submit" [disabled]="usuarioForm.invalid"
+                    class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold uppercase tracking-widest transition-all disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none">
+                    {{ idUsuarioSeleccionado ? 'Actualizar' : 'Guardar' }}
+                </button>
+            </form>
+        </div>
+    </div>
+    }
+
+    @if (confirmarEliminarOpen()) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 border border-gray-100 text-center">
+
+            <div class="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-red-500 text-3xl">⚠️</span>
+            </div>
+
+            <h3 class="text-lg font-bold text-[#013924] mb-2">¿Estás seguro?</h3>
+            <p class="text-gray-500 text-sm mb-6">
+                Esta acción eliminará al usuario permanentemente.
+            </p>
+
+            <div class="flex gap-3">
+                <button (click)="cerrarConfirmacion()"
+                    class="flex-1 py-3 rounded-xl font-bold text-gray-400 hover:bg-gray-100 transition-colors uppercase text-xs tracking-widest">
+                    No, cancelar
+                </button>
+
+                <button (click)="eliminarUsuario()"
+                    class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-200 uppercase text-xs tracking-widest">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+</div>
