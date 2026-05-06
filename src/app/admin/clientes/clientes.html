@@ -1,1 +1,174 @@
-<p>clientes works!</p>
+<div class="p-6 max-w-4xl mx-auto">
+
+  <!-- Encabezado -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-[#013924] tracking-tight italic">GESTIÓN CLIENTES</h2>
+    <button (click)="abrirNuevo()" class="bg-[#013924] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-all">
+      + NUEVO CLIENTE
+    </button>
+  </div>
+
+  <!-- Tabla de Clientes -->
+  <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+    <table class="w-full text-left">
+      <thead class="bg-[#013924] text-white text-xs uppercase tracking-widest text-center">
+        <tr>
+          <th class="p-5 text-left">Nombre</th>
+          <th class="p-5">Apellido</th>
+          <th class="p-5">Teléfono</th>
+          <th class="p-5">Estado</th>
+          <th class="p-5">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        @for (c of clientesPaginados(); track c.id) {
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="p-5 font-semibold text-gray-700">{{ c.nombre }}</td>
+            <td class="p-5 text-center text-gray-600">{{ c.apellido }}</td>
+            <td class="p-5 text-center font-bold text-[#013924]">{{ c.telefono }}</td>
+            <td class="p-5 text-center">
+              <span [class]="c.estado
+                ? 'bg-emerald-100 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full uppercase'
+                : 'bg-red-100 text-red-500 text-[10px] font-black px-3 py-1 rounded-full uppercase'">
+                {{ c.estado ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="p-5 text-center">
+              <button (click)="mostrarCliente(c)" class="hover:scale-125 transition-transform px-2 text-orange-400">✏️</button>
+              <button (click)="eliminarCliente(c.id)" class="hover:scale-125 transition-transform px-2 text-gray-400">🗑️</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Paginador -->
+    <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
+      <span class="text-[10px] font-bold text-gray-400 uppercase">Total: {{ clientes().length }}</span>
+      <div class="flex items-center gap-4">
+        <button (click)="paginaActual.set(paginaActual() - 1)"
+          [disabled]="paginaActual() === 1"
+          class="text-[#013924] disabled:opacity-20 font-bold">◀</button>
+        <span class="text-xs font-bold text-[#013924]">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+        <button (click)="paginaActual.set(paginaActual() + 1)"
+          [disabled]="paginaActual() >= totalPaginas()"
+          class="text-[#013924] disabled:opacity-20 font-bold">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  @if (isOpen) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 overflow-y-auto max-h-[90vh]">
+
+        <!-- Cabecera Modal -->
+        <div class="flex justify-between items-center mb-8">
+          <h3 class="text-xl font-black text-[#013924] uppercase tracking-tight">
+            {{ idClienteSeleccionado ? 'Editar Cliente' : 'Nuevo Cliente' }}
+          </h3>
+          <button (click)="isOpen = false" class="text-gray-300 hover:text-red-500 text-2xl transition-colors">&times;</button>
+        </div>
+
+        <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()" class="space-y-6">
+
+          <!-- Nombre -->
+          <div class="relative">
+            <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Nombre</label>
+            <input formControlName="nombre" type="text"
+              [class.border-red-500]="clienteForm.get('nombre')?.invalid && clienteForm.get('nombre')?.touched"
+              class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all">
+            @if (clienteForm.get('nombre')?.touched) {
+              @if (clienteForm.get('nombre')?.errors?.['required']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">El nombre es requerido</p>
+              }
+              @if (clienteForm.get('nombre')?.errors?.['minlength']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">Mínimo 3 caracteres</p>
+              }
+              @if (clienteForm.get('nombre')?.errors?.['pattern']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">No se permiten números ni símbolos</p>
+              }
+            }
+          </div>
+
+          <!-- Apellido -->
+          <div class="relative">
+            <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Apellido</label>
+            <input formControlName="apellido" type="text"
+              [class.border-red-500]="clienteForm.get('apellido')?.invalid && clienteForm.get('apellido')?.touched"
+              class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all">
+            @if (clienteForm.get('apellido')?.touched) {
+              @if (clienteForm.get('apellido')?.errors?.['required']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">El apellido es requerido</p>
+              }
+              @if (clienteForm.get('apellido')?.errors?.['minlength']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">Mínimo 3 caracteres</p>
+              }
+              @if (clienteForm.get('apellido')?.errors?.['pattern']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">No se permiten números ni símbolos</p>
+              }
+            }
+          </div>
+
+          <!-- Teléfono -->
+          <div class="relative">
+            <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Teléfono</label>
+            <input formControlName="telefono" type="text" maxlength="8"
+              [class.border-red-500]="clienteForm.get('telefono')?.invalid && clienteForm.get('telefono')?.touched"
+              class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all">
+            @if (clienteForm.get('telefono')?.touched) {
+              @if (clienteForm.get('telefono')?.errors?.['required']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">El teléfono es requerido</p>
+              }
+              @if (clienteForm.get('telefono')?.errors?.['minlength'] || clienteForm.get('telefono')?.errors?.['maxlength']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">Debe tener entre 7 y 8 dígitos</p>
+              }
+              @if (clienteForm.get('telefono')?.errors?.['pattern']) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">Solo se permiten números</p>
+              }
+            }
+          </div>
+
+          <!-- Estado (solo visible al editar) -->
+          @if (idClienteSeleccionado) {
+            <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <span class="text-[10px] font-black text-[#013924] uppercase">Estado del Cliente</span>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <span class="text-[10px] font-bold text-gray-400 uppercase">
+                  {{ clienteForm.get('estado')?.value ? 'Activo' : 'Inactivo' }}
+                </span>
+                <div class="relative">
+                  <input type="checkbox" formControlName="estado" class="sr-only peer">
+                  <div (click)="clienteForm.get('estado')?.setValue(!clienteForm.get('estado')?.value)"
+                    [class]="clienteForm.get('estado')?.value
+                      ? 'w-10 h-5 bg-[#013924] rounded-full cursor-pointer transition-all'
+                      : 'w-10 h-5 bg-gray-200 rounded-full cursor-pointer transition-all'">
+                    <div [class]="clienteForm.get('estado')?.value
+                      ? 'absolute top-0.5 left-5 w-4 h-4 bg-white rounded-full shadow transition-all'
+                      : 'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-all'">
+                    </div>
+                  </div>
+                </div>
+              </label>
+            </div>
+          }
+
+          <!-- Botón Guardar -->
+          <button type="submit"
+            class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
+            {{ idClienteSeleccionado ? 'ACTUALIZAR CLIENTE' : 'GUARDAR CLIENTE' }}
+          </button>
+
+        </form>
+
+        <!-- Cerrar -->
+        <button (click)="isOpen = false"
+          class="w-full mt-8 text-[10px] text-gray-300 font-black uppercase tracking-widest text-center hover:text-red-500 transition-colors">
+          Cerrar Ventana
+        </button>
+
+      </div>
+    </div>
+  }
+
+</div>
