@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
   styleUrl: './login.scss',
 })
 export class Login {
+  mensajeError = signal<string | null>(null);
   loginForm = new FormGroup({
     nombreUsuario: new FormControl('', [Validators.required, Validators.minLength(6), Validators.maxLength(30)]),
     contrasenia: new FormControl('', [Validators.required, Validators.minLength(6), Validators.maxLength(30)])
@@ -25,11 +26,10 @@ export class Login {
         console.log(res);
         localStorage.setItem("access_token", res.access_token);
         this.router.navigate(['/admin/usuarios']);
-        alert('Bienvenido...');
       },
-      (error) => {
-        console.log(error);
-        alert('ERROR');
+      (erro) => {
+        console.log(erro);
+        this.mensajeError.set('Las credenciales son incorrectas');
       }
     );
   }

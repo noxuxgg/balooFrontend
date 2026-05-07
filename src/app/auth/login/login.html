@@ -6,7 +6,7 @@
         <div class="w-full p-8 lg:w-1/2">
             <h2 class="text-2xl font-semibold text-gray-700 text-center">Gestión de Ventas</h2>
             <p class="text-xl text-gray-600 text-center">Pastelería Baloo</p>
-            
+
             <form [formGroup]="loginForm" class="mt-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="usuario">
@@ -15,8 +15,13 @@
                     <input
                         class="bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 border border-gray-300 rounded py-2 px-4 block w-full appearance-none"
                         type="text" formControlName="nombreUsuario" />
+                    <div class="h-3">
+                        @if(loginForm.controls.nombreUsuario.errors && loginForm.controls.nombreUsuario.touched){
+                        <small class="text-red-500">El nombre de usuario no es válido</small>
+                        }
+                    </div>
                 </div>
-                
+
                 <div class="mt-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="contrasenia">
                         Contraseña
@@ -24,24 +29,26 @@
                     <input
                         class="bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 border border-gray-300 rounded py-2 px-4 block w-full appearance-none"
                         type="password" formControlName="contrasenia" />
+                    <div class="h-3">
+                    </div>
                 </div>
             </form>
 
             <div class="mt-8">
-                <button class="bg-gray-700 text-white font-bold py-2 px-4 w-full rounded hover:bg-gray-600 disabled:opacity-50"
+                <button
+                    class="bg-[#013924] text-white font-bold py-2 px-4 w-full rounded hover:bg-[#024d31] disabled:opacity-50"
                     [disabled]="!loginForm.valid" (click)="funLogin()">
                     Iniciar Sesión
                 </button>
             </div>
 
-            @if(loginForm.controls.nombreUsuario.errors && loginForm.controls.nombreUsuario.touched){
-                <div class="mt-2">
-                    <small class="text-red-500">El nombre de usuario no es válido</small>
+            <div class="h-12 mt-2">
+                @if (mensajeError()) {
+                <div
+                    class="text-red-500 text-sm bg-red-50 border border-red-200 p-2 rounded text-center animate-in fade-in duration-300">
+                    {{ mensajeError() }}
                 </div>
-            }
-            <div class="mt-4 pt-4 border-t text-xs text-gray-400">
-                <p>Status: {{ loginForm.valid ? 'VÁLIDO' : 'INVÁLIDO' }}</p>
-                <pre>{{ loginForm.value | json }}</pre>
+                }
             </div>
         </div>
     </div>
