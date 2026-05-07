@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment.development';
 import { HttpClient } from '@angular/common/http';
+import { Sucursal } from '../interfaces/sucursal';
 
 @Injectable({
   providedIn: 'root',
 })
-export class Sucursales {
+export class SucursalService {
   urlBase = environment.servidor;
   http = inject(HttpClient);
 
@@ -17,11 +18,11 @@ export class Sucursales {
     return this.http.get(`${this.urlBase}/sucursales/${id}`);
   }
 
-  funGuardar(dato: Sucursales){
+  funGuardar(dato: Sucursal){
     return this.http.post(`${this.urlBase}/sucursales`, dato);
   }
 
-  funEditar(dato: Sucursales, id: string){
+  funEditar(dato: Sucursal, id: string){
     return this.http.patch(`${this.urlBase}/sucursales/${id}`, dato);
   }
 
