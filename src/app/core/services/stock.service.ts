@@ -10,7 +10,8 @@ export class StockService {
   urlBase = environment.servidor;
   http = inject(HttpClient);
 
-  funListarStock() {
+  // Reutiliza este para tu método de listar en vez de tener dos repetidos
+  findAll() {
     return this.http.get<Stock[]>(`${this.urlBase}/stock`);
   }
 
@@ -24,5 +25,10 @@ export class StockService {
 
   funEliminarStock(id: number) {
     return this.http.delete(`${this.urlBase}/stock/${id}`);
+  }
+
+  // CORREGIDO: Ahora usa 'urlBase' y apunta correctamente al endpoint de NestJS
+  actualizarUnidades(payload: any) {
+    return this.http.patch(`${this.urlBase}/stock/actualizar-unidades`, payload);
   }
 }
