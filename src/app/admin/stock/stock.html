@@ -1,10 +1,18 @@
-<div class="p-6 bg-white rounded-lg shadow">
+<div class="p-6 bg-white rounded-lg shadow relative">
   
-  <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+  @if (mensajeAlerta()) {
+    <div class="absolute top-4 right-4 z-50 flex items-center p-4 rounded-lg shadow-md transition-all border"
+         [class]="tipoAlerta() === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'">
+      <span class="text-sm font-semibold">{{ mensajeAlerta() }}</span>
+      <button (click)="mensajeAlerta.set(null)" class="ml-3 font-bold text-xs opacity-70 hover:opacity-100">✕</button>
+    </div>
+  }
+
+  <div class="flex flex-col lg:flex-row justify-between items-center mb-6 gap-4">
     <h2 class="text-2xl font-bold text-emerald-900 tracking-wide">GESTIÓN DE STOCK</h2>
     
-    <div class="flex items-center gap-3">
-      <select [formControl]="sucursalControl" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700">
+    <div class="flex flex-wrap items-center gap-3">
+      <select [formControl]="sucursalControl" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700 bg-white">
         <option value="">Todas las Sucursales</option>
         @for (suc of sucursales(); track suc.id) {
           <option [value]="suc.id">{{ suc.nombre }}</option>
@@ -20,8 +28,47 @@
       </button>
     </div>
 
-    <div class="relative">
-      <input type="text" [formControl]="buscadorControl" placeholder="Buscar producto..." class="border border-gray-300 rounded px-4 py-2 pl-9 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-emerald-700">
+    <div class="relative flex items-center gap-1">
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </span>
+        <input 
+          type="text" 
+          [formControl]="buscadorControl" 
+          (focus)="mostrarSugerenciasPrincipal.set(true)"
+          (keyup.enter)="ejecutarBusquedaPrincipal()"
+          placeholder="Escribe un producto..." 
+          class="border border-gray-300 rounded-l px-4 py-2 pl-9 pr-8 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-emerald-700"
+        >
+        @if (buscadorControl.value) {
+          <button 
+            (click)="limpiarBuscadorPrincipal()" 
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 text-xs">
+            ✕
+          </button>
+        }
+
+        @if (mostrarSugerenciasPrincipal() && sugerenciasBuscadorPrincipal().length > 0) {
+          <div class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl z-50 max-h-48 overflow-y-auto">
+            @for (sug of sugerenciasBuscadorPrincipal(); track sug) {
+              <div 
+                (click)="seleccionarSugerenciaPrincipal(sug)"
+                class="px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer transition-colors">
+                {{ sug }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+      
+      <button 
+        (click)="ejecutarBusquedaPrincipal()" 
+        class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2 rounded-r text-sm transition-colors shadow">
+        BUSCAR
+      </button>
     </div>
   </div>
 
@@ -38,30 +85,24 @@
       </thead>
       <tbody class="divide-y divide-gray-100 bg-white">
         @for (elemento of stockPaginado(); track elemento.id) {
-          <tr class="hover:bg-gray-50 transition-colors">
-            
+          <tr class="hover:bg-gray-50 transition-colors"
+              [class.bg-emerald-50\/30]="terminoBusquedaActivo() && elemento.producto?.nombre?.toLowerCase().includes(terminoBusquedaActivo())">
             <td class="px-6 py-4 text-sm font-medium text-gray-900">
               {{ elemento.producto?.nombre || 'Producto no asignado' }}
             </td>
-            
             <td class="px-6 py-4 text-sm font-bold text-gray-700">
               {{ elemento.producto?.precio || '0.00' }} Bs
             </td>
-            
             <td class="px-6 py-4 text-sm text-gray-500">
               {{ elemento.producto?.categoria?.nombre || elemento.producto?.categoria || 'Sin categoría' }}
             </td>
-            
             <td class="px-6 py-4">
               <div class="flex items-center space-x-3">
                 <button (click)="modificarCambioTemporal(elemento.id, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full font-bold transition-colors">-</button>
-                
-                <span class="text-sm font-semibold w-12 text-center">
+                <span class="text-sm font-semibold w-12 text-center" [class.text-red-600]="elemento.cantidad === 0">
                   {{ elemento.cantidad + (cambiosTemporales()[elemento.id] || 0) }}
                 </span>
-                
                 <button (click)="modificarCambioTemporal(elemento.id, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full font-bold transition-colors">+</button>
-                
                 @if (cambiosTemporales()[elemento.id]) {
                   <span class="text-xs font-bold text-orange-600">
                     ({{ cambiosTemporales()[elemento.id] > 0 ? '+' : '' }}{{ cambiosTemporales()[elemento.id] }})
@@ -69,7 +110,6 @@
                 }
               </div>
             </td>
-            
             <td class="px-6 py-4">
               <button 
                 (click)="solicitarConfirmacion(elemento)"
@@ -82,7 +122,7 @@
         } @empty {
           <tr>
             <td colspan="5" class="text-center py-12 text-gray-400 text-sm italic">
-              No se encontraron registros de stock activos en la base de datos.
+              No se encontraron registros de stock que coincidan con la búsqueda.
             </td>
           </tr>
         }
@@ -91,7 +131,7 @@
   </div>
 
   <div class="flex justify-between items-center mt-4 text-xs font-medium text-gray-500 px-2">
-    <div>TOTAL ITEMS: {{ stockFiltrado().length }}</div>
+    <div>TOTAL ITEMS FILTRADOS: {{ stockFiltrado().length }}</div>
     <div class="flex items-center space-x-2">
       <button [disabled]="paginaActual() === 1" (click)="paginaActual.set(paginaActual() - 1)" class="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40">◀</button>
       <span>Página {{ paginaActual() }} de {{ totalPaginas() || 1 }}</span>
@@ -100,25 +140,23 @@
   </div>
 </div>
 
-@if (modalConfirmacion().visible) {
+@if (modalConfirmacion.visible) {
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl max-w-md w-full shadow-2xl p-6 border border-gray-100">
       <h3 class="text-lg font-bold text-gray-900 mb-2">Confirmar Ajuste de Inventario</h3>
-      
       <p class="text-sm text-gray-600 mb-6 leading-relaxed">
         ¿Estás seguro de que deseas modificar el stock de 
-        <span class="font-bold text-gray-900">"{{ modalConfirmacion().registro?.producto?.nombre }}"</span>? 
+        <span class="font-bold text-gray-900">"{{ modalConfirmacion.registro?.producto?.nombre }}"</span>? 
         Se aplicará una variación de 
-        <span [class]="(modalConfirmacion().cantidad ?? 0) > 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'">
-          {{ (modalConfirmacion().cantidad ?? 0) > 0 ? '+' : '' }}{{ modalConfirmacion().cantidad }}
+        <span [class]="(modalConfirmacion.cantidad ?? 0) > 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'">
+          {{ (modalConfirmacion.cantidad ?? 0) > 0 ? '+' : '' }}{{ modalConfirmacion.cantidad }}
         </span> unidades sobre la sucursal seleccionada.
       </p>
-
       <div class="flex justify-end space-x-3">
         <button (click)="cerrarModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors">
           Cancelar
         </button>
-        <button (click)="procesarGuardadoStock()" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold rounded-lg transition-colors shadow">
+        <button (click)="procesarGuardadoStock()" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold rounded-lg transition-colors shadow shadow-emerald-900/20">
           Sí, Confirmar
         </button>
       </div>
@@ -134,7 +172,6 @@
       <div class="space-y-4">
         <div class="relative">
           <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Seleccionar Producto</label>
-          
           <input 
             type="text"
             [value]="busquedaComboProducto()"

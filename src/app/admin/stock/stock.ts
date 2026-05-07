@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { StockService } from '../../core/services/stock.service';
 import { Sucursales } from '../../core/services/sucursales.service';
 import { ProductoService } from '../../core/services/productos.service';
+import { CategoriaService } from '../../core/services/categorias.service';
 
 @Component({
   selector: 'app-stock',
@@ -14,34 +15,45 @@ export class Stock {
   private stockService = inject(StockService);
   private sucursalService = inject(Sucursales);
   private productosService = inject(ProductoService);
+  private categoriasService = inject(CategoriaService);
 
   // Signals de Datos Dinámicos
   productosStock = signal<any[]>([]);
   sucursales = signal<any[]>([]);
   productosGlobales = signal<any[]>([]); 
+  categorias = signal<any[]>([]); 
   
   // Guardado de variaciones numéricas temporales { [idStock]: +5 o -3 }
   cambiosTemporales = signal<{ [key: number]: number }>({});
 
-  // Controles de Filtrado de la Tabla Principal
+  // Controles de Filtrado Principal
   sucursalControl = new FormControl('');
   buscadorControl = new FormControl('');
+  
+  // Almacena el término confirmado tras pulsar "Buscar"
+  terminoBusquedaActivo = signal<string>('');
+  mostrarSugerenciasPrincipal = signal<boolean>(false);
   sucursalFiltradaActual = signal<string>('');
 
   // Control de búsqueda interna para el Combo-Box del Modal
   busquedaComboProducto = signal<string>('');
+  productoSeleccionadoNombre = signal<string>('');
   mostrarDropdownCombo = signal<boolean>(false);
+
+  // Control de Alertas Embebidas
+  mensajeAlerta = signal<string | null>(null);
+  tipoAlerta = signal<'success' | 'error'>('error');
 
   // Paginación
   paginaActual = signal(1);
   itemsPorPagina = 5;
 
-  // Estado del Modal de Confirmación (Tipado como 'any' para evitar errores TS2339)
-  modalConfirmacion = signal<{ visible: boolean; registro: any; cantidad: number }>({
+  // Estado del Modal de Confirmación (Ajuste de Stock)
+  modalConfirmacion = {
     visible: false,
-    registro: null,
-    cantidad: 0
-  });
+    registro: null as any,
+    cantidad: 0 as number | null
+  };
 
   // Estado del Modal Nuevo (Añadir Producto a Sucursal)
   modalNuevoStock = {
@@ -53,11 +65,6 @@ export class Stock {
 
   constructor() {
     this.cargarDatosIniciales();
-    
-    // Al escribir en el buscador regresamos automáticamente a la página 1
-    this.buscadorControl.valueChanges.subscribe(() => {
-      this.paginaActual.set(1);
-    });
   }
 
   cargarDatosIniciales() {
@@ -72,22 +79,90 @@ export class Stock {
     this.productosService.funListarProductos().subscribe((res: any) => {
       this.productosGlobales.set(res);
     });
+
+    this.categoriasService.funListar().subscribe((res: any) => {
+      this.categorias.set(res);
+    });
   }
 
-  // --- COMBO-BOX AUTOCOMPLETABLE SINTAXIS SEGURA (Evita caracteres especiales como 'ñ') ---
+  obtenerNombreCategoria(categoriaId: number | undefined): string {
+    if (!categoriaId) return 'Sin categoría';
+    const cat = this.categorias().find(c => c.id === categoriaId);
+    return cat ? cat.nombre : 'Sin categoría';
+  }
+
+  lanzarAlerta(mensaje: string, tipo: 'success' | 'error' = 'error') {
+    this.mensajeAlerta.set(mensaje);
+    this.tipoAlerta.set(tipo);
+    setTimeout(() => this.mensajeAlerta.set(null), 4000);
+  }
+
+  // --- SUGERENCIAS EN TIEMPO REAL PARA EL BUSCADOR PRINCIPAL ---
+  sugerenciasBuscadorPrincipal = computed(() => {
+    const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
+    if (!query) return [];
+    
+    // Retorna coincidencias basadas en los productos del stock actual
+    return this.productosStock()
+      .filter(p => p.producto?.nombre?.toLowerCase().includes(query))
+      .map(p => p.producto?.nombre)
+      .filter((value, index, self) => self.indexOf(value) === index) // Remover duplicados
+      .slice(0, 5); // Limitar a 5 sugerencias
+  });
+
+  // --- EJECUTAR BÚSQUEDA EXPLICITA (AL PULSAR EL BOTÓN) ---
+  ejecutarBusquedaPrincipal() {
+    const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
+    this.terminoBusquedaActivo.set(query);
+    this.mostrarSugerenciasPrincipal.set(false);
+    this.paginaActual.set(1);
+
+    if (query) {
+      // 1. Verificar si el producto existe globalmente
+      const existeGlobalmente = this.productosGlobales().some(p => p.nombre?.toLowerCase().includes(query));
+      
+      // 2. Verificar si existe en el stock filtrado de la sucursal actual
+      const sucursalId = this.sucursalFiltradaActual();
+      let listadoSucursal = this.productosStock();
+      if (sucursalId) {
+        listadoSucursal = listadoSucursal.filter(p => p.sucursalId === Number(sucursalId));
+      }
+      
+      const registroEnStock = listadoSucursal.find(p => p.producto?.nombre?.toLowerCase().includes(query));
+
+      if (!existeGlobalmente) {
+        this.lanzarAlerta(`El producto "${this.buscadorControl.value}" no existe en el catálogo general.`, 'error');
+      } else if (!registroEnStock) {
+        this.lanzarAlerta(`El producto existe pero no está asignado a la sucursal seleccionada.`, 'error');
+      } else if (registroEnStock.cantidad === 0) {
+        this.lanzarAlerta(`Advertencia: El producto "${registroEnStock.producto?.nombre}" no tiene unidades disponibles (Stock 0).`, 'error');
+      }
+    }
+  }
+
+  seleccionarSugerenciaPrincipal(nombre: string) {
+    this.buscadorControl.setValue(nombre);
+    this.ejecutarBusquedaPrincipal();
+  }
+
+  limpiarBuscadorPrincipal() {
+    this.buscadorControl.setValue('');
+    this.terminoBusquedaActivo.set('');
+    this.mostrarSugerenciasPrincipal.set(false);
+    this.paginaActual.set(1);
+  }
+
+  // --- LÓGICA DEL COMBO-BOX DEL MODAL ---
   productosDisponiblesParaAsignar = computed(() => {
     const sucursalId = Number(this.sucursalFiltradaActual());
     if (!sucursalId) return [];
 
-    // IDs de productos que ya se encuentran registrados en esta sucursal
     const idsExistentes = this.productosStock()
       .filter(s => s.sucursalId === sucursalId)
       .map(s => s.productoId);
 
-    // Filtrar del catálogo global lo que no está en la sucursal
     let disponibles = this.productosGlobales().filter(p => !idsExistentes.includes(p.id));
 
-    // Filtrar por el texto que ingresa el usuario en el buscador del combo
     const criterio = this.busquedaComboProducto().toLowerCase().trim();
     if (criterio) {
       disponibles = disponibles.filter(p => p.nombre?.toLowerCase().includes(criterio));
@@ -98,29 +173,39 @@ export class Stock {
 
   seleccionarProductoCombo(producto: any) {
     this.modalNuevoStock.productoId = producto.id;
-    // Asignamos el nombre formateado directamente al input de búsqueda para que se mantenga escrito
-    this.busquedaComboProducto.set(`${producto.nombre} - ${producto.precio} Bs`);
+    this.productoSeleccionadoNombre.set(`${producto.nombre} - ${producto.precio} Bs`);
     this.mostrarDropdownCombo.set(false);
+    this.busquedaComboProducto.set(producto.nombre); 
   }
 
-  // --- LÓGICA FILTRADO, ORDENACIÓN Y BÚSQUEDA ---
+  // --- FILTRADO, ORDENACIÓN Y ORDEN DE PRIORIDAD EN LA TABLA ---
   stockFiltrado = computed(() => {
     let listado = [...this.productosStock()];
-    const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
+    const query = this.terminoBusquedaActivo();
     const sucursalId = this.sucursalFiltradaActual();
 
     if (sucursalId) {
       listado = listado.filter(p => p.sucursalId === Number(sucursalId));
     }
 
-    if (query) {
-      listado = listado.filter(p => p.producto?.nombre?.toLowerCase().includes(query));
-    }
-
+    // Clasificación y Ordenación Avanzada
     return listado.sort((a, b) => {
-      if (a.cantidad === 0 && b.cantidad > 0) return 1;   
-      if (a.cantidad > 0 && b.cantidad === 0) return -1;  
-      return b.cantidad - a.cantidad;                     
+      const nombreA = (a.producto?.nombre ?? '').toLowerCase();
+      const nombreB = (b.producto?.nombre ?? '').toLowerCase();
+
+      if (query) {
+        const coincideA = nombreA.includes(query);
+        const coincideB = nombreB.includes(query);
+
+        // Si uno coincide con la búsqueda y el otro no, va primero el coincidente (Pin to top)
+        if (coincideA && !coincideB) return -1;
+        if (!coincideA && coincideB) return 1;
+      }
+
+      // Ordenación secundaria por defecto (Stock cero al final, mayores cantidades arriba)
+      if (a.cantidad === 0 && b.cantidad > 0) return 1; 
+      if (a.cantidad > 0 && b.cantidad === 0) return -1; 
+      return b.cantidad - a.cantidad; 
     });
   });
 
@@ -133,25 +218,29 @@ export class Stock {
 
   totalPaginas = computed(() => Math.ceil(this.stockFiltrado().length / this.itemsPorPagina));
 
-  // --- GESTIÓN DE MODALES ---
+  // --- GESTIÓN DE MODALES NUEVOS ---
   abrirModalNuevoStock() {
     if (!this.sucursalFiltradaActual()) {
-      alert("Selecciona una sucursal primero");
+      this.lanzarAlerta("Por favor, selecciona y aplica una sucursal primero antes de añadir productos.");
       return;
     }
-    this.busquedaComboProducto.set(''); 
-    this.modalNuevoStock.productoId = null;
     this.modalNuevoStock.visible = true;
-  }
-
-  cerrarModalNuevoStock() {
-    this.modalNuevoStock = { visible: false, productoId: null, cantidadInicial: 1, stockMinimo: 5 };
+    this.productoSeleccionadoNombre.set('');
     this.busquedaComboProducto.set('');
     this.mostrarDropdownCombo.set(false);
   }
 
+  cerrarModalNuevoStock() {
+    this.modalNuevoStock = { visible: false, productoId: null, cantidadInicial: 1, stockMinimo: 5 };
+    this.productoSeleccionadoNombre.set('');
+    this.busquedaComboProducto.set('');
+  }
+
   guardarNuevoStock() {
-    if (!this.modalNuevoStock.productoId) return;
+    if (!this.modalNuevoStock.productoId) {
+      this.lanzarAlerta("Debes seleccionar un producto válido usando el buscador del combo.");
+      return;
+    }
 
     const payload = {
       productoId: Number(this.modalNuevoStock.productoId),
@@ -162,12 +251,17 @@ export class Stock {
 
     this.stockService.funGuardarStock(payload).subscribe({
       next: () => {
+        this.lanzarAlerta("Producto asignado correctamente al inventario.", "success");
         this.cerrarModalNuevoStock();
         this.cargarDatosIniciales();
+      },
+      error: () => {
+        this.lanzarAlerta("Ocurrió un error al intentar guardar el registro.");
       }
     });
   }
 
+  // --- GESTIÓN DE CANTIDADES EXISTENTES ---
   modificarCambioTemporal(id: number, valor: number) {
     const mapaActual = { ...this.cambiosTemporales() };
     const variacionActual = mapaActual[id] || 0;
@@ -196,23 +290,19 @@ export class Stock {
     const cantidad = this.cambiosTemporales()[registro.id] || 0;
     if (cantidad === 0) return;
 
-    this.modalConfirmacion.set({
+    this.modalConfirmacion = {
       visible: true,
       registro: registro,
       cantidad: cantidad
-    });
+    };
   }
 
   cerrarModal() {
-    this.modalConfirmacion.set({
-      visible: false,
-      registro: null,
-      cantidad: 0
-    });
+    this.modalConfirmacion = { visible: false, registro: null, cantidad: 0 };
   }
 
   procesarGuardadoStock() {
-    const { registro, cantidad } = this.modalConfirmacion();
+    const { registro, cantidad } = this.modalConfirmacion;
     if (!registro || !cantidad) return;
 
     const payload = {
@@ -227,8 +317,17 @@ export class Stock {
         delete mapaActual[registro.id];
         this.cambiosTemporales.set(mapaActual);
         this.cerrarModal();
+        this.lanzarAlerta("El stock se actualizó exitosamente.", "success");
         this.cargarDatosIniciales(); 
+      },
+      error: () => {
+        this.cerrarModal();
+        this.lanzarAlerta("Error al procesar la actualización del stock.");
       }
     });
+  }
+
+  obtenerValorAbsoluto(valor: number | null): number {
+    return valor ? Math.abs(valor) : 0;
   }
 }
