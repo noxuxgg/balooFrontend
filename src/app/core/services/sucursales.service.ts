@@ -25,7 +25,7 @@ export class Sucursales {
     return this.http.patch(`${this.urlBase}/sucursales/${id}`, dato);
   }
 
-  funEliminar(id: string){
+  funEliminar(id: string){ 
     return this.http.delete(`${this.urlBase}/sucursales/${id}`);
   } 
 }
