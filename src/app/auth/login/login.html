@@ -1,21 +1,48 @@
-<h1>Ingresar</h1>
+<div class="min-h-screen w-full bg-[#013924] flex items-center justify-center py-12 px-4">
+    <div class="flex bg-white rounded-lg shadow-lg overflow-hidden mx-auto max-w-sm lg:max-w-4xl w-full">
+        <div class="hidden lg:block lg:w-1/2 bg-cover bg-center"
+            style="background-image:url('https://w0.peakpx.com/wallpaper/173/611/HD-wallpaper-baloo.jpg')">
+        </div>
+        <div class="w-full p-8 lg:w-1/2">
+            <h2 class="text-2xl font-semibold text-gray-700 text-center">Gestión de Ventas</h2>
+            <p class="text-xl text-gray-600 text-center">Pastelería Baloo</p>
+            
+            <form [formGroup]="loginForm" class="mt-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="usuario">
+                        Nombre de Usuario
+                    </label>
+                    <input
+                        class="bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 border border-gray-300 rounded py-2 px-4 block w-full appearance-none"
+                        type="text" formControlName="nombreUsuario" />
+                </div>
+                
+                <div class="mt-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="contrasenia">
+                        Contraseña
+                    </label>
+                    <input
+                        class="bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 border border-gray-300 rounded py-2 px-4 block w-full appearance-none"
+                        type="password" formControlName="contrasenia" />
+                </div>
+            </form>
 
-<form [formGroup]="loginForm">
-    <label for="usuario">Ingrese Usuario:</label>
-    <input type="text" formControlName="nombreUsuario">
-    <br>
-    <label for="contrasenia">Ingrese contraseña:</label>
-    <input type="password" formControlName="contrasenia">
-    <br>
-    <button type="button" [disabled]="!loginForm.valid" (click)="funLogin()">Ingresar</button>
-</form>
-<hr>
-@if(!loginForm.controls.nombreUsuario.errors){
-    <div>
-        <small>El nombre de usuario no es válido</small>
+            <div class="mt-8">
+                <button class="bg-gray-700 text-white font-bold py-2 px-4 w-full rounded hover:bg-gray-600 disabled:opacity-50"
+                    [disabled]="!loginForm.valid" (click)="funLogin()">
+                    Iniciar Sesión
+                </button>
+            </div>
+
+            @if(loginForm.controls.nombreUsuario.errors && loginForm.controls.nombreUsuario.touched){
+                <div class="mt-2">
+                    <small class="text-red-500">El nombre de usuario no es válido</small>
+                </div>
+            }
+            <div class="mt-4 pt-4 border-t text-xs text-gray-400">
+                <p>Status: {{ loginForm.valid ? 'VÁLIDO' : 'INVÁLIDO' }}</p>
+                <pre>{{ loginForm.value | json }}</pre>
+            </div>
+        </div>
     </div>
-}
-
-{{ loginForm.value | json }}
-<hr>
-<h4>ES VÁLIDO?: {{ loginForm.valid }}</h4>
+</div>
