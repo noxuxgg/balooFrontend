@@ -30,6 +30,9 @@
                 </tr>
                 }
             </tbody>
+            <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Total: {{ usuarios().length }}</span>
+            </div>
         </table>
     </div>
 
@@ -99,7 +102,7 @@
                     <div class="flex items-center">
                         <span class="text-red-500 mr-2">⚠️</span>
                         <p class="text-red-700 text-xs font-bold uppercase tracking-tight">
-                            {{ errorServidor() }} 
+                            {{ errorServidor() }}
                         </p>
                     </div>
                 </div>
