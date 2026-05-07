@@ -12,6 +12,8 @@ import { Sucursales } from './admin/sucursales/sucursales';
 import { AdminLayout } from './admin/admin-layout/admin-layout';
 
 export const routes: Routes = [
+    { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
+    { path: 'auth', redirectTo: 'auth/login', pathMatch: 'full' },
     { path: 'auth', loadChildren: () => import('./auth/auth-module').then(m => m.AuthModule) },
 
     {
@@ -32,6 +34,6 @@ export const routes: Routes = [
         ]
     },
 
-    { path: '', redirectTo: 'auth', pathMatch: 'full' },
-    { path: '**', redirectTo: 'auth' }
+    
+    { path: '**', redirectTo: 'auth/login' }
 ];
