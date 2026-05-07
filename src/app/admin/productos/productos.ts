@@ -18,9 +18,6 @@ export class Productos {
   productos = signal<any>([]);
   categorias = signal<any>([]);
   
-  // Control de Modal e IDs
-
-  
   isOpen = false;
   idProductoSeleccionado = "";
   idCategoriaSeleccionada = "";
@@ -33,11 +30,26 @@ export class Productos {
   paginaActualCat = signal(1);
   itemsPorPaginaCat = 3;
 
-  // Formulario Producto: Todo obligatorio, precio > 0
+  // --- ESTADO DEL MODAL DE ALERTA/CONFIRMACIÓN ---
+  confirmModal = signal<{
+    show: boolean;
+    titulo: string;
+    mensaje: string;
+    accion: (() => void) | null;
+    esAlerta: boolean; // true para solo "Aceptar", false para "Sí/No"
+  }>({
+    show: false,
+    titulo: '',
+    mensaje: '',
+    accion: null,
+    esAlerta: false
+  });
+
+  // Formulario Producto
   productoForm = new FormGroup({
     nombre: new FormControl('', [
       Validators.required, 
-      Validators.pattern(this.soloLetras) // No permite números
+      Validators.pattern(this.soloLetras)
     ]),
     precio: new FormControl<number | null>(null, [Validators.required, Validators.min(0.1)]),
     categoriaId: new FormControl('', [Validators.required])
@@ -46,7 +58,7 @@ export class Productos {
   categoriaForm = new FormGroup({
     nombre: new FormControl('', [
       Validators.required, 
-      Validators.pattern(this.soloLetras) // No permite números
+      Validators.pattern(this.soloLetras)
     ]),
     descripcion: new FormControl('') 
   });
@@ -74,27 +86,51 @@ export class Productos {
   totalPaginasProd = computed(() => Math.ceil(this.productos().length / this.itemsPorPagina));
   totalPaginasCat = computed(() => Math.ceil(this.categorias().length / this.itemsPorPaginaCat));
 
+  // --- REEMPLAZO DE ALERTS (ABRIR MODAL) ---
+  mostrarAlerta(titulo: string, mensaje: string) {
+    this.confirmModal.set({
+      show: true,
+      titulo,
+      mensaje,
+      accion: null,
+      esAlerta: true
+    });
+  }
+
+  mostrarConfirmacion(titulo: string, mensaje: string, accion: () => void) {
+    this.confirmModal.set({
+      show: true,
+      titulo,
+      mensaje,
+      accion,
+      esAlerta: false
+    });
+  }
+
+  cerrarConfirmModal() {
+    this.confirmModal.update(state => ({ ...state, show: false }));
+  }
+
+  ejecutarAccionConfirm() {
+    const accion = this.confirmModal().accion;
+    if (accion) accion();
+    this.cerrarConfirmModal();
+  }
+
   // --- MÉTODOS PRODUCTOS ---
   guardarProducto() {
     if (this.productoForm.invalid) {
       this.productoForm.markAllAsTouched();
-      alert('Por favor, completa todos los campos requeridos correctamente.');
+      this.mostrarAlerta('Campos Incompletos', 'Por favor, completa todos los campos requeridos correctamente.');
       return;
     }
 
     const formValues = this.productoForm.value;
-    
-    // ASEGURAMOS LA CONVERSIÓN: El select suele devolver string "1", necesitamos number 1
     const datosEnvio = {
       nombre: formValues.nombre ?? '',
       precio: Number(formValues.precio),
-      // Si en tu backend la propiedad se llama categoriaId, déjalo así. 
-      // Si usas la entidad completa, asegúrate de que el backend lo reciba correctamente.
       categoriaId: Number(formValues.categoriaId) 
     };
-
-    // DEBUG EN CONSOLA: Para que veas exactamente qué sale hacia el service
-    console.log('Enviando a backend:', datosEnvio);
 
     if (this.idProductoSeleccionado) {
       this.productoService.funEditarProducto(datosEnvio, Number(this.idProductoSeleccionado))
@@ -107,7 +143,7 @@ export class Productos {
         .subscribe({
           next: () => this.resetProd(),
           error: (err) => {
-            alert('Error al guardar. Revisa la consola.');
+            this.mostrarAlerta('Error', 'Hubo un error al guardar el producto. Revisa la consola.');
             console.error('Error al guardar:', err);
           }
         });
@@ -115,7 +151,13 @@ export class Productos {
   }
 
   eliminarProducto(id: number) {
-    if (confirm('¿Eliminar producto?')) this.productoService.funEliminarProducto(id).subscribe(() => this.listarTodo());
+    this.mostrarConfirmacion(
+      '¿Estás seguro?', 
+      'Esta acción eliminará el producto permanentemente.', 
+      () => {
+        this.productoService.funEliminarProducto(id).subscribe(() => this.listarTodo());
+      }
+    );
   }
 
   mostrarProducto(datos: any) {
@@ -140,7 +182,7 @@ export class Productos {
   guardarCategoria() {
     if (this.categoriaForm.invalid) {
       this.categoriaForm.markAllAsTouched();
-      alert('El nombre de la categoría es obligatorio y no debe tener números.');
+      this.mostrarAlerta('Atención', 'El nombre de la categoría es obligatorio y no debe tener números.');
       return;
     }
 
@@ -153,7 +195,13 @@ export class Productos {
   }
 
   eliminarCategoria(id: number) {
-    if (confirm('¿Eliminar categoría?')) this.categoriaService.funEliminar(id).subscribe(() => this.listarTodo());
+    this.mostrarConfirmacion(
+      '¿Estás seguro?', 
+      'Esta acción eliminará la categoría permanentemente.', 
+      () => {
+        this.categoriaService.funEliminar(id).subscribe(() => this.listarTodo());
+      }
+    );
   }
 
   mostrarCategoria(cat: any) {

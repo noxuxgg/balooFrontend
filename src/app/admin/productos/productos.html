@@ -6,7 +6,6 @@
     </button>
   </div>
 
-  <!-- Tabla de Productos -->
   <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
     <table class="w-full text-left">
       <thead class="bg-[#013924] text-white text-xs uppercase tracking-widest text-center">
@@ -34,7 +33,6 @@
       </tbody>
     </table>
     
-    <!-- Paginador Productos -->
     <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
       <span class="text-[10px] font-bold text-gray-400 uppercase">Total: {{ productos().length }}</span>
       <div class="flex items-center gap-4">
@@ -45,7 +43,6 @@
     </div>
   </div>
 
-  <!-- Modal -->
   @if (isOpen) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 overflow-y-auto max-h-[90vh]">
@@ -58,7 +55,6 @@
         </div>
 
         <form [formGroup]="productoForm" (ngSubmit)="guardarProducto()" class="space-y-6">
-          <!-- Campo Nombre Producto -->
           <div class="relative">
             <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Nombre</label>
             <input formControlName="nombre" type="text" 
@@ -71,21 +67,10 @@
               @if (productoForm.get('nombre')?.errors?.['pattern']) {
                 <p class="text-[10px] text-red-500 font-bold mt-1">No se permiten números ni símbolos</p>
               }
-              <!-- Visor de Debug Seguro -->
-                @if (productoForm.value) {
-                <div class="bg-slate-900 text-emerald-400 p-4 rounded-xl my-4 font-mono text-[10px] shadow-inner border border-slate-700">
-                    <p class="text-slate-400 border-b border-slate-700 mb-2 pb-1 uppercase font-black flex justify-between">
-                    <span>Consola de Datos</span>
-                    <span [class.text-red-500]="productoForm.invalid">● {{ productoForm.valid ? 'OK' : 'INVALID' }}</span>
-                    </p>
-                    <pre class="whitespace-pre-wrap">{{ productoForm.value | json }}</pre>
-                </div>
-                }
             }
           </div>
           
           <div class="grid grid-cols-2 gap-4">
-            <!-- Campo Precio -->
             <div class="relative">
               <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Precio (Bs)</label>
               <input formControlName="precio" type="number" step="0.1" 
@@ -96,7 +81,6 @@
               }
             </div>
 
-            <!-- Campo Selección Categoría -->
             <div class="relative">
               <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Categoría</label>
               <select formControlName="categoriaId" 
@@ -116,12 +100,10 @@
           </button>
         </form>
         
-        <!-- Sección Gestión de Categorías en el Modal -->
         <div class="mt-10 bg-gray-50 p-6 rounded-2xl border border-gray-100">
           <h4 class="text-[10px] font-black text-gray-400 mb-6 uppercase text-center tracking-widest">Gestión de Categorías</h4>
           
           <form [formGroup]="categoriaForm" (ngSubmit)="guardarCategoria()" class="space-y-6">
-            <!-- Campo Nombre Categoría -->
             <div class="relative">
               <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Nombre Categoría</label>
               <input formControlName="nombre" type="text" placeholder="Nueva Categoría" 
@@ -137,7 +119,6 @@
               }
             </div>
 
-            <!-- Campo Descripción Categoría -->
             <div class="relative">
               <label class="text-[10px] font-black text-gray-400 uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Descripción</label>
               <textarea formControlName="descripcion" placeholder="Descripción breve..." 
@@ -150,7 +131,6 @@
             </button>
           </form>
 
-          <!-- Listado de Categorías con Paginación -->
           <div class="mt-6 space-y-2">
             @for (cat of categoriasPaginadas(); track cat.id) {
               <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100">
@@ -171,6 +151,38 @@
         </div>
 
         <button (click)="isOpen = false" class="w-full mt-8 text-[10px] text-gray-300 font-black uppercase tracking-widest text-center hover:text-red-500 transition-colors">Cerrar Ventana</button>
+      </div>
+    </div>
+  }
+
+  @if (confirmModal().show) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 text-center transform transition-all animate-in fade-in zoom-in-95 duration-200">
+        
+        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-orange-50 mb-4">
+          <span class="text-orange-500 text-3xl font-bold">⚠️</span>
+        </div>
+
+        <h3 class="text-lg font-bold text-[#013924] mb-2">{{ confirmModal().titulo }}</h3>
+        <p class="text-xs text-gray-500 mb-6 leading-relaxed">{{ confirmModal().mensaje }}</p>
+
+        <div class="flex gap-3 justify-center">
+          @if (!confirmModal().esAlerta) {
+            <button (click)="cerrarConfirmModal()" 
+                    class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+              No, Cancelar
+            </button>
+            <button (click)="ejecutarAccionConfirm()" 
+                    class="px-4 py-2 text-xs font-bold text-white uppercase tracking-wider bg-red-500 rounded-xl shadow-md shadow-red-200 hover:bg-red-600 transition-colors">
+              Sí, Eliminar
+            </button>
+          } @else {
+            <button (click)="cerrarConfirmModal()" 
+                    class="w-full px-4 py-2 text-xs font-bold text-white uppercase tracking-wider bg-[#013924] rounded-xl hover:opacity-90 transition-opacity">
+              Aceptar
+            </button>
+          }
+        </div>
       </div>
     </div>
   }
