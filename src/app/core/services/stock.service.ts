@@ -28,7 +28,8 @@ export class StockService {
   }
 
   // CORREGIDO: Ahora usa 'urlBase' y apunta correctamente al endpoint de NestJS
-  actualizarUnidades(payload: any) {
-    return this.http.patch(`${this.urlBase}/stock/actualizar-unidades`, payload);
+  actualizarUnidades(payload: { productoId: number; sucursalId: number; cantidadModificada: number }) {
+    // Asegúrate de usar la sub-ruta correcta de tu API y pasarle el payload completo en el body
+    return this.http.patch(`http://localhost:3000/stock/actualizar-unidades`, payload);
   }
 }

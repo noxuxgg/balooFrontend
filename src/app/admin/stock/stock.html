@@ -1,126 +1,188 @@
-<div class="p-6 max-w-5xl mx-auto">
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-    <h2 class="text-2xl font-bold text-[#013924] tracking-tight italic">GESTIÓN DE STOCK</h2>
+<div class="p-6 bg-white rounded-lg shadow">
+  
+  <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <h2 class="text-2xl font-bold text-emerald-900 tracking-wide">GESTIÓN DE STOCK</h2>
     
-    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-      <div class="relative min-w-[200px]">
-        <select [formControl]="sucursalControl" 
-                class="w-full border-2 border-gray-100 focus:border-[#013924] p-2.5 rounded-xl outline-none appearance-none bg-white text-sm font-semibold text-gray-700">
-          <option value="">Todas las Sucursales</option>
-          @for (s of sucursales(); track s.id) {
-            <option [value]="s.id">{{ s.nombre }}</option>
-          }
-        </select>
-      </div>
-
-      <button (click)="aplicarFiltroSucursal()" 
-              class="bg-[#013924] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:opacity-90 transition-all uppercase tracking-wider">
-        Aplicar
+    <div class="flex items-center gap-3">
+      <select [formControl]="sucursalControl" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700">
+        <option value="">Todas las Sucursales</option>
+        @for (suc of sucursales(); track suc.id) {
+          <option [value]="suc.id">{{ suc.nombre }}</option>
+        }
+      </select>
+      
+      <button (click)="aplicarFiltroSucursal()" class="bg-emerald-800 hover:bg-emerald-900 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow">
+        APLICAR
       </button>
 
-      <div class="relative flex-1 md:flex-none min-w-[240px]">
-        <input [formControl]="buscadorControl" 
-               type="text" 
-               placeholder="🔍 Buscar producto..." 
-               class="w-full border-2 border-gray-100 focus:border-[#013924] p-2.5 pl-4 rounded-xl outline-none text-sm transition-all">
-      </div>
+      <button (click)="abrirModalNuevoStock()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow flex items-center gap-1">
+        <span class="text-base font-bold">+</span> Añadir Producto
+      </button>
+    </div>
+
+    <div class="relative">
+      <input type="text" [formControl]="buscadorControl" placeholder="Buscar producto..." class="border border-gray-300 rounded px-4 py-2 pl-9 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-emerald-700">
     </div>
   </div>
 
-  <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
-    <table class="w-full text-left">
-      <thead class="bg-[#013924] text-white text-xs uppercase tracking-widest text-center">
-        <tr>
-          <th class="p-5 text-left">Producto</th>
-          <th class="p-5">Precio</th>
-          <th class="p-5">Categoría</th>
-          <th class="p-5 w-48">Modificar Stock</th>
-          <th class="p-5">Acción</th>
+  <div class="overflow-x-auto rounded-lg border border-gray-100 shadow-sm">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-emerald-900 text-white text-xs font-semibold tracking-wider uppercase">
+          <th class="px-6 py-3">Producto</th>
+          <th class="px-6 py-3">Precio</th>
+          <th class="px-6 py-3">Categoría</th>
+          <th class="px-6 py-3">Modificar Stock</th>
+          <th class="px-6 py-3">Acción</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
-        @for (item of stockPaginado(); track item.id) {
-          <tr class="hover:bg-gray-50 transition-colors" [class.bg-red-50/40]="item.stock === 0">
-            <td class="p-5 font-semibold text-gray-700">
-              {{ item.nombre }}
-              @if (item.stock === 0) {
-                <span class="ml-2 inline-block bg-red-100 text-red-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Sin Stock</span>
-              }
-            </td>
-            <td class="p-5 text-center font-bold text-[#013924]">{{ item.precio }} Bs</td>
-            <td class="p-5 text-center text-sm text-gray-400 italic">
-              {{ item.categoria?.nombre || 'Sin categoría' }}
+      <tbody class="divide-y divide-gray-100 bg-white">
+        @for (elemento of stockPaginado(); track elemento.id) {
+          <tr class="hover:bg-gray-50 transition-colors">
+            
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">
+              {{ elemento.producto?.nombre || 'Producto no asignado' }}
             </td>
             
-            <td class="p-5">
-              <div class="flex items-center justify-center bg-gray-50 border border-gray-200 rounded-xl p-1 max-w-[150px] mx-auto">
-                <button (click)="modificarCambioTemporal(item.id, -1)" 
-                        class="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-200 font-bold transition-colors text-lg">-</button>
+            <td class="px-6 py-4 text-sm font-bold text-gray-700">
+              {{ elemento.producto?.precio || '0.00' }} Bs
+            </td>
+            
+            <td class="px-6 py-4 text-sm text-gray-500">
+              {{ elemento.producto?.categoria?.nombre || elemento.producto?.categoria || 'Sin categoría' }}
+            </td>
+            
+            <td class="px-6 py-4">
+              <div class="flex items-center space-x-3">
+                <button (click)="modificarCambioTemporal(elemento.id, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full font-bold transition-colors">-</button>
                 
-                <div class="flex-1 text-center font-mono">
-                  <span class="font-bold text-gray-700 text-sm">{{ item.stock }}</span>
-                  @if (cambiosTemporales()[item.id]) {
-                    <span class="text-xs font-bold ml-1 text-emerald-600">
-                      ({{ cambiosTemporales()[item.id] > 0 ? '+' : '' }}{{ cambiosTemporales()[item.id] }})
-                    </span>
-                  }
-                </div>
-
-                <button (click)="modificarCambioTemporal(item.id, 1)" 
-                        class="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-200 font-bold transition-colors text-lg">+</button>
+                <span class="text-sm font-semibold w-12 text-center">
+                  {{ elemento.cantidad + (cambiosTemporales()[elemento.id] || 0) }}
+                </span>
+                
+                <button (click)="modificarCambioTemporal(elemento.id, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full font-bold transition-colors">+</button>
+                
+                @if (cambiosTemporales()[elemento.id]) {
+                  <span class="text-xs font-bold text-orange-600">
+                    ({{ cambiosTemporales()[elemento.id] > 0 ? '+' : '' }}{{ cambiosTemporales()[elemento.id] }})
+                  </span>
+                }
               </div>
             </td>
-
-            <td class="p-5 text-center">
-              <button (click)="solicitarConfirmacion(item)" 
-                      [disabled]="!cambiosTemporales()[item.id]"
-                      class="bg-emerald-600 disabled:bg-gray-200 text-white disabled:text-gray-400 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm hover:opacity-95">
+            
+            <td class="px-6 py-4">
+              <button 
+                (click)="solicitarConfirmacion(elemento)"
+                [disabled]="!(cambiosTemporales()[elemento.id])"
+                class="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-semibold disabled:bg-gray-200 disabled:text-gray-400 hover:bg-emerald-800 transition-all shadow-sm">
                 Enviar
               </button>
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="5" class="p-10 text-center text-sm font-semibold text-gray-400">No se encontraron registros de stock.</td>
+            <td colspan="5" class="text-center py-12 text-gray-400 text-sm italic">
+              No se encontraron registros de stock activos en la base de datos.
+            </td>
           </tr>
         }
       </tbody>
     </table>
-    
-    <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
-      <span class="text-[10px] font-bold text-gray-400 uppercase">Total Items: {{ stockFiltrado().length }}</span>
-      <div class="flex items-center gap-4">
-        <button (click)="paginaActual.set(paginaActual() - 1)" [disabled]="paginaActual() === 1" class="text-[#013924] disabled:opacity-20 font-bold">◀</button>
-        <span class="text-xs font-bold text-[#013924]">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
-        <button (click)="paginaActual.set(paginaActual() + 1)" [disabled]="paginaActual() >= totalPaginas()" class="text-[#013924] disabled:opacity-20 font-bold">▶</button>
+  </div>
+
+  <div class="flex justify-between items-center mt-4 text-xs font-medium text-gray-500 px-2">
+    <div>TOTAL ITEMS: {{ stockFiltrado().length }}</div>
+    <div class="flex items-center space-x-2">
+      <button [disabled]="paginaActual() === 1" (click)="paginaActual.set(paginaActual() - 1)" class="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40">◀</button>
+      <span>Página {{ paginaActual() }} de {{ totalPaginas() || 1 }}</span>
+      <button [disabled]="paginaActual() >= totalPaginas()" (click)="paginaActual.set(paginaActual() + 1)" class="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40">▶</button>
+    </div>
+  </div>
+</div>
+
+@if (modalConfirmacion().visible) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-md w-full shadow-2xl p-6 border border-gray-100">
+      <h3 class="text-lg font-bold text-gray-900 mb-2">Confirmar Ajuste de Inventario</h3>
+      
+      <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+        ¿Estás seguro de que deseas modificar el stock de 
+        <span class="font-bold text-gray-900">"{{ modalConfirmacion().registro?.producto?.nombre }}"</span>? 
+        Se aplicará una variación de 
+        <span [class]="(modalConfirmacion().cantidad ?? 0) > 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'">
+          {{ (modalConfirmacion().cantidad ?? 0) > 0 ? '+' : '' }}{{ modalConfirmacion().cantidad }}
+        </span> unidades sobre la sucursal seleccionada.
+      </p>
+
+      <div class="flex justify-end space-x-3">
+        <button (click)="cerrarModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button (click)="procesarGuardadoStock()" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold rounded-lg transition-colors shadow">
+          Sí, Confirmar
+        </button>
       </div>
     </div>
   </div>
+}
 
-  @if (modalConfirmacion.visible) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
-        <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span class="text-amber-500 text-3xl">⚠️</span>
+@if (modalNuevoStock.visible) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-md w-full shadow-2xl p-6 border border-gray-100 relative">
+      <h3 class="text-lg font-bold text-emerald-950 mb-4">Asignar Producto a Sucursal</h3>
+      
+      <div class="space-y-4">
+        <div class="relative">
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Seleccionar Producto</label>
+          
+          <input 
+            type="text"
+            [value]="busquedaComboProducto()"
+            (focus)="mostrarDropdownCombo.set(true)"
+            (input)="busquedaComboProducto.set($any($event.target).value); mostrarDropdownCombo.set(true)"
+            placeholder="-- Escribe el nombre para buscar --"
+            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700 bg-white"
+          />
+
+          @if (mostrarDropdownCombo() && productosDisponiblesParaAsignar().length > 0) {
+            <div class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl max-h-40 overflow-y-auto z-50">
+              @for (p of productosDisponiblesParaAsignar(); track p.id) {
+                <div 
+                  (click)="seleccionarProductoCombo(p)"
+                  class="px-3 py-2 text-sm hover:bg-emerald-50 text-gray-700 hover:text-emerald-900 cursor-pointer transition-colors">
+                  {{ p.nombre }} - {{ p.precio }} Bs
+                </div>
+              }
+            </div>
+          } @else if (mostrarDropdownCombo() && busquedaComboProducto().trim() !== '' && productosDisponiblesParaAsignar().length === 0) {
+            <div class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl p-3 text-center text-xs text-gray-400 italic z-50">
+              No hay más productos disponibles con ese nombre
+            </div>
+          }
         </div>
-        
-        <h3 class="text-lg font-black text-[#013924] mb-2 uppercase tracking-tight">¿Estás seguro?</h3>
-        <p class="text-sm text-gray-500 mb-6 leading-relaxed">
-          Vas a modificar el stock de <strong class="text-gray-700">{{ modalConfirmacion.producto?.nombre }}</strong>.<br>
-          Acción: <strong class="text-emerald-600">{{ modalConfirmacion.cantidad! > 0 ? 'Aumentar' : 'Disminuir' }} {{ obtenerValorAbsoluto(modalConfirmacion.cantidad) }} unidades</strong>.
-        </p>
 
-        <div class="flex gap-3 justify-center">
-          <button (click)="cerrarModal()" 
-                  class="px-5 py-2.5 rounded-xl border-2 border-gray-100 hover:bg-gray-50 text-gray-500 font-bold text-xs uppercase tracking-wider transition-colors">
-            No, Cancelar
-          </button>
-          <button (click)="procesarGuardadoStock()" 
-                  class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider shadow-md hover:opacity-90 transition-opacity">
-            Sí, Confirmar
-          </button>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Inicial en Tienda</label>
+          <input type="number" [(ngModel)]="modalNuevoStock.cantidadInicial" min="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Alerta Stock Mínimo</label>
+          <input type="number" [(ngModel)]="modalNuevoStock.stockMinimo" min="1" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700">
         </div>
       </div>
+
+      <div class="flex justify-end space-x-3 mt-6">
+        <button (click)="cerrarModalNuevoStock()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button 
+          (click)="guardarNuevoStock()" 
+          [disabled]="!modalNuevoStock.productoId" 
+          class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold rounded-lg transition-colors shadow disabled:bg-gray-200 disabled:text-gray-400">
+          Guardar en Inventario
+        </button>
+      </div>
     </div>
-  }
-</div>
+  </div>
+}
