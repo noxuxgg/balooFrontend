@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { PagoPedido } from '../interfaces/pago-pedido';
 import { Pedido } from '../interfaces/pedido';
 
@@ -8,7 +8,7 @@ import { Pedido } from '../interfaces/pedido';
   providedIn: 'root',
 })
 export class PagosPedidoService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
   funListarPagoPedido(){
     return this.http.get<PagoPedido[]>(`${this.urlBase}/pagos-pedido`);

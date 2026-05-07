@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Sucursal } from '../interfaces/sucursal';
 
@@ -7,7 +7,7 @@ import { Sucursal } from '../interfaces/sucursal';
   providedIn: 'root',
 })
 export class SucursalService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
 
   funListar(){

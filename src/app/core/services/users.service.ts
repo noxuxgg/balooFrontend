@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { Usuario } from '../interfaces/usuario';
 
 
@@ -8,7 +8,7 @@ import { Usuario } from '../interfaces/usuario';
   providedIn: 'root',
 })
 export class UsersService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
 
   funListar(){

@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { Cliente } from '../interfaces/cliente';
 import { HttpClient } from '@angular/common/http';
 
@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root',
 })
 export class ClienteService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
 
   funListar(){

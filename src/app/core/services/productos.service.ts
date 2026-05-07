@@ -1,14 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
-import { Producto } from '../interfaces/producto'; // Asegúrate de exportar ambas de tu archivo de interfaces
+import { environment } from '../../../environments/environment';
+import { Producto } from '../interfaces/producto';
 import { Categoria } from '../interfaces/categoria';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductoService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
 
   funListarProductos() {

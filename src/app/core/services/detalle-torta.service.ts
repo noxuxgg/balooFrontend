@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { DetalleTorta } from '../interfaces/detalle-torta';
 import { Pedido } from '../interfaces/pedido';
 @Injectable({
   providedIn: 'root',
 })
 export class DetalleTortaService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
   funListarDetalleTorta(){
     return this.http.get<DetalleTorta[]>(`${this.urlBase}/detalle-torta`);

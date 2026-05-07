@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
-import { Stock } from '../interfaces/stock'; // Asegúrate de tener esta interfaz
+import { environment } from '../../../environments/environment';
+import { Stock } from '../interfaces/stock';
 
 @Injectable({
   providedIn: 'root',
 })
 export class StockService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
 
   // Reutiliza este para tu método de listar en vez de tener dos repetidos

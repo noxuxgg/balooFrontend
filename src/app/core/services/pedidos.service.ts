@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { Pedido } from '../interfaces/pedido';
 import { HttpClient } from '@angular/common/http';
 import { Usuario } from '../interfaces/usuario';
@@ -9,7 +9,7 @@ import { Cliente } from '../interfaces/cliente';
   providedIn: 'root',
 })
 export class PedidoService {
-  urlBase = environment.servidor;
+  private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
   funListarPedido(){
     return this.http.get<Pedido[]>(`${this.urlBase}/pedidos`);
