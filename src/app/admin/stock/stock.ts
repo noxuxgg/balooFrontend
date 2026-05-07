@@ -1,9 +1,9 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { StockService } from '../../core/services/stock.service';
-import { Sucursales } from '../../core/services/sucursales.service';
 import { ProductoService } from '../../core/services/productos.service';
 import { CategoriaService } from '../../core/services/categorias.service';
+import { SucursalService } from '../../core/services/sucursales.service';
 
 @Component({
   selector: 'app-stock',
@@ -13,7 +13,7 @@ import { CategoriaService } from '../../core/services/categorias.service';
 })
 export class Stock {
   private stockService = inject(StockService);
-  private sucursalService = inject(Sucursales);
+  private sucursalService = inject(SucursalService);
   private productosService = inject(ProductoService);
   private categoriasService = inject(CategoriaService);
 
