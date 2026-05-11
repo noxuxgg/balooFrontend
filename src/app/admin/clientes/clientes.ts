@@ -11,7 +11,7 @@ import { ClienteService } from '../../core/services/clientes.service';
 })
 export class Clientes {
 
-  soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+  soloLetras = /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$/;
   soloNumeros = /^[0-9]+$/;
 
   clienteService = inject(ClienteService);
@@ -20,6 +20,8 @@ export class Clientes {
 
   // Control de Modal e IDs
   isOpen = false;
+  confirmarEliminarOpen = signal(false);
+  idParaEliminar: number | null = null;
   idClienteSeleccionado = '';
 
   // Paginación
@@ -92,22 +94,40 @@ export class Clientes {
         .funEditar(datosEnvio, Number(this.idClienteSeleccionado))
         .subscribe({
           next: () => this.resetForm(),
-          error: (err) => console.error('Error al editar:', err),
+          error: (err) => {
+            const msg = err.error.message || "Error al editar";
+            alert(msg)
+          },
         });
     } else {
       this.clienteService.funGuardar(datosEnvio).subscribe({
         next: () => this.resetForm(),
         error: (err) => {
-          alert('Error al guardar. Revisa la consola.');
+          const msg = err.error.message || "Error al guardar, revise la consola";
+          alert(msg);
           console.error('Error al guardar:', err);
         },
       });
     }
   }
 
-  eliminarCliente(id: number) {
-    if (confirm('¿Deseas eliminar este cliente?'))
-      this.clienteService.funEliminar(id).subscribe(() => this.listarClientes());
+  abrirConfirmacion(id: number) {
+    this.idParaEliminar = id;
+    this.confirmarEliminarOpen.set(true);
+  }
+
+  cerrarConfirmacion() {
+    this.idParaEliminar = null;
+    this.confirmarEliminarOpen.set(false);
+  }
+
+  eliminarCliente() {
+    if (this.idParaEliminar !== null) {
+      this.clienteService.funEliminar(this.idParaEliminar).subscribe(() => {
+        this.listarClientes();
+        this.cerrarConfirmacion();
+      });
+    }
   }
 
   mostrarCliente(datos: any) {

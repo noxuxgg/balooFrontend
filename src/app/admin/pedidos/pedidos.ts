@@ -26,6 +26,8 @@ export class Pedidos {
 
   // Control de Modal e IDs
   isOpen = false;
+  confirmarEliminarOpen = signal(false);
+  idParaEliminar: number | null = null;
   idPedidoSeleccionado = '';
 
   // Paginación
@@ -38,7 +40,10 @@ export class Pedidos {
     sucursalId:       new FormControl<number | null>(null,  [Validators.required]),
     fechaPedido:      new FormControl('',  [Validators.required]),
     fechaEntrega:     new FormControl('',  [Validators.required]),
-    horaEntrega:      new FormControl('',  [Validators.required]),
+    horaEntrega:      new FormControl('',  [
+      Validators.required,
+      Validators.pattern(/^([01]\d|2[0-3]):([0-5]\d)$/),
+    ]),
     cantidadPersonas: new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
     lugarEntrega:     new FormControl('',  [Validators.required, Validators.minLength(8)]),
     total:            new FormControl<number | null>(null, [Validators.required, Validators.min(0.1)]),
@@ -54,6 +59,16 @@ export class Pedidos {
     this.authService.funGetPerfil().subscribe((perfil: any) => {
       this.usuarioActualId.set(perfil.id);
       this.usuarioActualNombre.set(perfil.nombreUsuario);
+    });
+    this.pedidoForm.valueChanges.subscribe(val =>{
+      const tot = val.total || 0;
+      const ade = val.adelanto || 0;
+      const calculoSaldo = tot - ade;
+
+      this.pedidoForm.patchValue(
+        { saldo: calculoSaldo > 0 ? calculoSaldo : 0},
+        { emitEvent: false }
+      )
     });
   }
 
@@ -145,10 +160,24 @@ listarTodo() {
     }
   }
 
-  eliminarPedido(id: number) {
-    if (confirm('¿Deseas eliminar este pedido?'))
-      this.pedidoService.funEliminarPedido(id).subscribe(() => this.listarTodo());
+  abrirConfirmacion(id: number) {
+    this.idParaEliminar = id;
+    this.confirmarEliminarOpen.set(true);
   }
+
+  cerrarConfirmacion() {
+    this.idParaEliminar = null;
+    this.confirmarEliminarOpen.set(false);
+  }
+
+  eliminarPedido() {
+    if (this.idParaEliminar !== null) {
+    this.pedidoService.funEliminarPedido(this.idParaEliminar).subscribe(() => {
+      this.listarTodo();
+      this.cerrarConfirmacion();
+    });
+  }
+}
 
   mostrarPedido(datos: any) {
     this.idPedidoSeleccionado = datos.id;
