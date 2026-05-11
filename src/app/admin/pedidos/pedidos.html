@@ -1,5 +1,4 @@
 <div class="p-6 max-w-5xl mx-auto">
-
   <!-- Encabezado -->
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-bold text-[#013924] tracking-tight italic">GESTIÓN PEDIDOS</h2>
@@ -42,7 +41,7 @@
             </td>
             <td class="p-4 text-center">
               <button (click)="mostrarPedido(p)" class="hover:scale-125 transition-transform px-2 text-orange-400">✏️</button>
-              <button (click)="eliminarPedido(p.id)" class="hover:scale-125 transition-transform px-2 text-gray-400">🗑️</button>
+              <button (click)="abrirConfirmacion(p.id)" class="hover:scale-125 transition-transform px-2 text-gray-400">🗑️</button>
             </td>
           </tr>
         }
@@ -64,11 +63,10 @@
     </div>
   </div>
 
-  <!-- Modal -->
+  <!-- Modal Crear/Editar -->
   @if (isOpen) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 overflow-y-auto max-h-[90vh]">
-
         <!-- Cabecera Modal -->
         <div class="flex justify-between items-center mb-8">
           <h3 class="text-xl font-black text-[#013924] uppercase tracking-tight">
@@ -78,14 +76,13 @@
             class="text-gray-300 hover:text-red-500 text-2xl transition-colors">&times;</button>
         </div>
 
-        <!-- Usuario autenticado (solo lectura, igual que ventas) -->
+        <!-- Usuario autenticado (solo lectura) -->
         <div class="bg-gray-50 rounded-xl px-4 py-3 mb-6 border border-gray-100">
           <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Usuario actual</p>
           <p class="text-xs font-bold text-[#013924]">{{ usuarioActualNombre() || 'Cargando...' }}</p>
         </div>
 
         <form [formGroup]="pedidoForm" (ngSubmit)="guardarPedido()" class="space-y-6">
-
           <!-- SECCIÓN: Asignación -->
           <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100 space-y-4">
             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Asignación</p>
@@ -127,7 +124,6 @@
           <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Fechas y Entrega</p>
             <div class="grid grid-cols-2 gap-4">
-
               <!-- Fecha Pedido -->
               <div class="relative">
                 <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Fecha Pedido</label>
@@ -157,7 +153,7 @@
                   [class.border-red-500]="pedidoForm.get('horaEntrega')?.invalid && pedidoForm.get('horaEntrega')?.touched"
                   class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all bg-white">
                 @if (pedidoForm.get('horaEntrega')?.invalid && pedidoForm.get('horaEntrega')?.touched) {
-                  <p class="text-[10px] text-red-500 font-bold mt-1">Requerido</p>
+                  <p class="text-[10px] text-red-500 font-bold mt-1">Formato de hora no valido</p>
                 }
               </div>
 
@@ -171,7 +167,6 @@
                   <p class="text-[10px] text-red-500 font-bold mt-1">Mínimo 1 persona</p>
                 }
               </div>
-
             </div>
 
             <!-- Lugar Entrega -->
@@ -195,7 +190,6 @@
           <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Montos (Bs)</p>
             <div class="grid grid-cols-3 gap-4">
-
               <div class="relative">
                 <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Total</label>
                 <input formControlName="total" type="number" step="0.1" min="0.1"
@@ -205,7 +199,6 @@
                   <p class="text-[10px] text-red-500 font-bold mt-1">Mínimo 0.10 Bs</p>
                 }
               </div>
-
               <div class="relative">
                 <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Adelanto</label>
                 <input formControlName="adelanto" type="number" step="0.1" min="0"
@@ -215,24 +208,20 @@
                   <p class="text-[10px] text-red-500 font-bold mt-1">Requerido</p>
                 }
               </div>
-
               <div class="relative">
                 <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Saldo</label>
-                <input formControlName="saldo" type="number" step="0.1" min="0"
-                  [class.border-red-500]="pedidoForm.get('saldo')?.invalid && pedidoForm.get('saldo')?.touched"
-                  class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all bg-white">
-                @if (pedidoForm.get('saldo')?.invalid && pedidoForm.get('saldo')?.touched) {
-                  <p class="text-[10px] text-red-500 font-bold mt-1">Requerido</p>
-                }
+                <input formControlName="saldo" type="number" step="0.1" readonly
+                  class="w-full border-2 border-gray-100 bg-gray-100 p-3 rounded-xl outline-none cursor-not-allowed font-bold text-[#013924]">
+                <p class="text-[8px] text-gray-400 mt-1 uppercase italic">Cálculo automático (Total - Adelanto)</p>
               </div>
-
             </div>
           </div>
 
           <!-- Observaciones -->
           <div class="relative">
             <label class="text-[10px] font-black text-gray-400 uppercase absolute -top-2 left-2 bg-white px-1 z-10">Observaciones</label>
-            <textarea formControlName="observaciones" rows="3" placeholder="Notas adicionales del pedido..."
+            <textarea formControlName="observaciones" rows="3"
+              placeholder="Notas adicionales del pedido..."
               class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all resize-none">
             </textarea>
           </div>
@@ -246,8 +235,8 @@
                   {{ pedidoForm.get('estado')?.value ? 'Activo' : 'Inactivo' }}
                 </span>
                 <div [class]="pedidoForm.get('estado')?.value
-                    ? 'w-10 h-5 bg-[#013924] rounded-full cursor-pointer transition-all relative'
-                    : 'w-10 h-5 bg-gray-200 rounded-full cursor-pointer transition-all relative'"
+                  ? 'w-10 h-5 bg-[#013924] rounded-full cursor-pointer transition-all relative'
+                  : 'w-10 h-5 bg-gray-200 rounded-full cursor-pointer transition-all relative'"
                   (click)="pedidoForm.get('estado')?.setValue(!pedidoForm.get('estado')?.value)">
                   <div [class]="pedidoForm.get('estado')?.value
                     ? 'absolute top-0.5 left-5 w-4 h-4 bg-white rounded-full shadow transition-all'
@@ -257,12 +246,12 @@
               </label>
             </div>
           }
+
           <!-- Botón Guardar -->
           <button type="submit"
             class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
             {{ idPedidoSeleccionado ? 'ACTUALIZAR PEDIDO' : 'GUARDAR PEDIDO' }}
           </button>
-
         </form>
 
         <!-- Cerrar -->
@@ -270,9 +259,30 @@
           class="w-full mt-8 text-[10px] text-gray-300 font-black uppercase tracking-widest text-center hover:text-red-500 transition-colors">
           Cerrar Ventana
         </button>
-
       </div>
     </div>
   }
 
+  <!-- Modal Confirmar Eliminación -->
+  @if (confirmarEliminarOpen()) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 border border-gray-100 text-center">
+        <div class="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-red-500 text-3xl">⚠️</span>
+        </div>
+        <h3 class="text-lg font-bold text-[#013924] mb-2">¿Estás seguro?</h3>
+        <p class="text-gray-500 text-sm mb-6">Esta acción eliminará el pedido permanentemente.</p>
+        <div class="flex gap-3">
+          <button (click)="cerrarConfirmacion()"
+            class="flex-1 py-3 rounded-xl font-bold text-gray-400 hover:bg-gray-100 transition-colors uppercase text-xs tracking-widest">
+            No, cancelar
+          </button>
+          <button (click)="eliminarPedido()"
+            class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-200 uppercase text-xs tracking-widest">
+            Sí, eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
