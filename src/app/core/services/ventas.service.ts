@@ -12,8 +12,12 @@ export class VentasService {
     return this.http.get<Venta[]>(`${this.urlBase}/ventas`);
   }
 
-  funGuardar(dato: Venta) {
+  funGuardar(dato: any) {
     return this.http.post(`${this.urlBase}/ventas`, dato);
+  }
+
+  funEditar(dato: any, id: number) {                              //  agregado
+    return this.http.patch(`${this.urlBase}/ventas/${id}`, dato);
   }
 
   funEliminar(id: number) {

@@ -1,10 +1,24 @@
 <div class="p-6 max-w-5xl mx-auto">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-bold text-[#013924] tracking-tight italic">GESTIÓN VENTAS</h2>
-    <button (click)="isOpen = true" class="bg-[#013924] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-all">
+    <button (click)="isOpen.set(true)" class="bg-[#013924] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-all">
       + NUEVA VENTA
     </button>
   </div>
+
+  <!-- Alertas de stock mínimo (amarillo) -->
+  @if (alertasStock().length > 0) {
+    <div class="mb-6 space-y-2">
+      @for (alerta of alertasStock(); track $index) {
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl">
+          <div class="flex items-center">
+            <span class="text-yellow-500 mr-2">⚠️</span>
+            <p class="text-yellow-700 text-xs font-bold uppercase tracking-tight">{{ alerta }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
 
   <!-- Tabla de Ventas -->
   <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
@@ -26,7 +40,6 @@
             <td class="p-5 text-center text-sm text-gray-400">{{ v.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
             <td class="p-5 text-center font-bold text-[#013924]">{{ v.total }} Bs</td>
 
-            <!-- Detalles -->
             <td class="p-5 text-center">
               @if (v.detalles && v.detalles.length > 0) {
                 <div class="text-xs text-gray-500 space-y-1">
@@ -41,7 +54,6 @@
               }
             </td>
 
-            <!-- Pagos -->
             <td class="p-5 text-center">
               @if (v.pagos && v.pagos.length > 0) {
                 <div class="text-xs text-gray-500 space-y-1">
@@ -57,14 +69,14 @@
             </td>
 
             <td class="p-5 text-center">
-              <button (click)="eliminarVenta(v.id)" class="hover:scale-125 transition-transform px-2 text-gray-400">🗑️</button>
+              <button (click)="editarVenta(v); isOpen.set(true)" class="hover:scale-125 transition-transform px-2" title="Editar venta">✏️</button>
+              <button (click)="ventaEliminar(v.id)" class="hover:scale-125 transition-transform px-2" title="Anular venta">🗑️</button>
             </td>
           </tr>
         }
       </tbody>
     </table>
 
-    <!-- Paginador -->
     <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
       <span class="text-[10px] font-bold text-gray-400 uppercase">Total: {{ ventas().length }}</span>
       <div class="flex items-center gap-4">
@@ -75,25 +87,24 @@
     </div>
   </div>
 
-  <!-- Modal Nueva Venta -->
-  @if (isOpen) {
+  <!-- Modal Nueva / Editar Venta -->
+  @if (isOpen()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 overflow-y-auto max-h-[90vh]">
 
         <div class="flex justify-between items-center mb-8">
-          <h3 class="text-xl font-black text-[#013924] uppercase tracking-tight">Nueva Venta</h3>
-          <button (click)="isOpen = false" class="text-gray-300 hover:text-red-500 text-2xl transition-colors">&times;</button>
+          <h3 class="text-xl font-black text-[#013924] uppercase tracking-tight">
+            {{ idVentaSeleccionada ? 'Editar Venta' : 'Nueva Venta' }}
+          </h3>
+          <button (click)="cerrarModal()" class="text-gray-300 hover:text-red-500 text-2xl transition-colors">&times;</button>
         </div>
 
-        <!-- 👈 Muestra el usuario actual automático -->
         <div class="bg-gray-50 rounded-xl px-4 py-3 mb-6 border border-gray-100">
           <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Usuario actual</p>
-          <p class="text-xs font-bold text-[#013924]">{{ usuarioActualNombre() || 'Cargando...' }}</p>  <!-- 👈 nombre -->
+          <p class="text-xs font-bold text-[#013924]">{{ usuarioActualNombre() || 'Cargando...' }}</p>
         </div>
 
         <form [formGroup]="ventaForm" class="space-y-4 mb-6">
-
-          <!-- Sucursal -->
           <div class="relative">
             <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Sucursal</label>
             <select formControlName="sucursalId"
@@ -142,7 +153,6 @@
             + Agregar Producto
           </button>
 
-          <!-- Lista detalles agregados -->
           @if (detalles().length > 0) {
             <div class="mt-4 space-y-2">
               @for (d of detalles(); track $index) {
@@ -183,7 +193,6 @@
             + Agregar Pago
           </button>
 
-          <!-- Lista pagos agregados -->
           @if (pagos().length > 0) {
             <div class="mt-4 space-y-2">
               @for (p of pagos(); track $index) {
@@ -197,13 +206,52 @@
           }
         </div>
 
-        <button (click)="guardarVenta()" class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
-          GUARDAR VENTA
-        </button>this.usuarioActualNombre.set(perfil.nombreUsuario);
+        <!-- Error del servidor (rojo) -->
+        @if (errorServidor()) {
+          <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl animate-pulse">
+            <div class="flex items-center">
+              <span class="text-red-500 mr-2">⚠️</span>
+              <p class="text-red-700 text-xs font-bold uppercase tracking-tight">{{ errorServidor() }}</p>
+            </div>
+          </div>
+        }
 
-        <button (click)="isOpen = false" class="w-full mt-4 text-[10px] text-gray-300 font-black uppercase tracking-widest text-center hover:text-red-500 transition-colors">
+        <button (click)="guardarVenta()"
+          class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
+          {{ idVentaSeleccionada ? 'ACTUALIZAR VENTA' : 'GUARDAR VENTA' }}
+        </button>
+
+        <button (click)="cerrarModal()" class="w-full mt-4 text-[10px] text-gray-300 font-black uppercase tracking-widest text-center hover:text-red-500 transition-colors">
           Cerrar Ventana
         </button>
+      </div>
+    </div>
+  }
+
+  <!-- Modal confirmar anular -->
+  @if (confirmarEliminarOpen()) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 border border-gray-100 text-center">
+
+        <div class="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-red-500 text-3xl">⚠️</span>
+        </div>
+
+        <h3 class="text-lg font-bold text-[#013924] mb-2">¿Estás seguro?</h3>
+        <p class="text-gray-500 text-sm mb-6">
+          Esta acción anulará la venta y devolverá el stock al inventario.
+        </p>
+
+        <div class="flex gap-3">
+          <button (click)="cerrarConfirmacion()"
+            class="flex-1 py-3 rounded-xl font-bold text-gray-400 hover:bg-gray-100 transition-colors uppercase text-xs tracking-widest">
+            No, cancelar
+          </button>
+          <button (click)="eliminarVenta()"
+            class="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-200 uppercase text-xs tracking-widest">
+            Sí, anular
+          </button>
+        </div>
       </div>
     </div>
   }
