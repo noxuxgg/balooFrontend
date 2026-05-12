@@ -2,12 +2,12 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { VentasService } from '../../core/services/ventas.service';
 import { AuthService } from '../../core/services/auth.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DatePipe, DecimalPipe, JsonPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-ventas',
   standalone: true,
-  imports: [ReactiveFormsModule, JsonPipe, DatePipe, DecimalPipe],
+  imports: [ReactiveFormsModule, DatePipe, DecimalPipe], // quitado JsonPipe que no se usa
   templateUrl: './ventas.html',
 })
 export class Ventas {
@@ -18,14 +18,19 @@ export class Ventas {
   ventas = signal<any[]>([]);
   productos = signal<any[]>([]);
   sucursales = signal<any[]>([]);
-  usuarioActualId = signal<string>('');    // guarda el uuid del usuario
-  usuarioActualNombre = signal<string>('');   // agregar
+  usuarioActualId = signal<string>('');
+  usuarioActualNombre = signal<string>('');
 
-  isOpen = false;
-  idVentaSeleccionada = '';
+  isOpen = signal(false);
+  confirmarEliminarOpen = signal(false);
+  private idParaEliminar: number = 0;
+  idVentaSeleccionada = 0;
 
   detalles = signal<any[]>([]);
   pagos = signal<any[]>([]);
+
+  errorServidor = signal('');
+  alertasStock = signal<string[]>([]);
 
   paginaActual = signal(1);
   itemsPorPagina = 5;
@@ -47,7 +52,6 @@ export class Ventas {
 
   constructor() {
     this.listarTodo();
-    // 👈 cargar perfil para obtener uuid automático
     this.authService.funGetPerfil().subscribe((perfil: any) => {
       this.usuarioActualId.set(perfil.id);
       this.usuarioActualNombre.set(perfil.nombreUsuario);
@@ -71,7 +75,6 @@ export class Ventas {
     this.detalles().reduce((sum, d) => sum + d.cantidad * d.precioUnitario, 0)
   );
 
-  // 👈 precio automático al elegir producto
   onProductoChange(event: Event) {
     const id = Number((event.target as HTMLSelectElement).value);
     const producto = this.productos().find(p => p.id === id);
@@ -91,13 +94,19 @@ export class Ventas {
       productoId: Number(val.productoId),
       cantidad: Number(val.cantidad),
       precioUnitario: Number(val.precioUnitario),
-      nombreProducto: producto?.nombre ?? ''   // 👈 solo para mostrar en UI
+      nombreProducto: producto?.nombre ?? ''
     }]);
     this.detalleForm.reset();
+    const nuevoTotal = this.totalCalculado();
+    this.pagoForm.patchValue({ monto: nuevoTotal });
   }
 
   quitarDetalle(index: number) {
     this.detalles.update(d => d.filter((_, i) => i !== index));
+    setTimeout(() => {
+      const nuevoTotal = this.totalCalculado();
+      this.pagoForm.patchValue({ monto: nuevoTotal > 0 ? nuevoTotal : null });
+    });
   }
 
   agregarPago() {
@@ -106,10 +115,7 @@ export class Ventas {
       return;
     }
     const val = this.pagoForm.value;
-    this.pagos.update(p => [...p, {
-      metodo: val.metodo,
-      monto: Number(val.monto)
-    }]);
+    this.pagos.update(p => [...p, { metodo: val.metodo, monto: Number(val.monto) }]);
     this.pagoForm.reset({ metodo: 'efectivo' });
   }
 
@@ -117,52 +123,114 @@ export class Ventas {
     this.pagos.update(p => p.filter((_, i) => i !== index));
   }
 
+  editarVenta(venta: any) {
+    this.idVentaSeleccionada = venta.id;
+    this.ventaForm.patchValue({ sucursalId: venta.sucursalId });
+    this.detalles.set(
+      (venta.detalles ?? []).map((d: any) => ({
+        productoId: d.productoId,
+        cantidad: d.cantidad,
+        precioUnitario: d.precioUnitario,
+        nombreProducto: d.producto?.nombre ?? ''
+      }))
+    );
+    this.pagos.set(
+      (venta.pagos ?? []).map((p: any) => ({
+        metodo: p.metodo,
+        monto: p.monto
+      }))
+    );
+    this.pagoForm.patchValue({ monto: this.totalCalculado() });
+    this.isOpen.set(true);
+  }
+
   guardarVenta() {
     if (this.ventaForm.invalid) {
       this.ventaForm.markAllAsTouched();
-      alert('Completa todos los campos requeridos.');
+      this.errorServidor.set('Completa todos los campos requeridos.');
+      setTimeout(() => this.errorServidor.set(''), 5000);
       return;
     }
     if (this.detalles().length === 0) {
-      alert('Agrega al menos un producto.');
+      this.errorServidor.set('Agrega al menos un producto.');
+      setTimeout(() => this.errorServidor.set(''), 5000);
       return;
     }
     if (this.pagos().length === 0) {
-      alert('Agrega al menos un pago.');
+      this.errorServidor.set('Agrega al menos un pago.');
+      setTimeout(() => this.errorServidor.set(''), 5000);
       return;
     }
 
     const datos: any = {
       usuarioId: this.usuarioActualId(),
       sucursalId: Number(this.ventaForm.value.sucursalId ?? 0),
-      detalles: this.detalles().map(({ nombreProducto, ...resto }) => resto), // 👈 quita nombreProducto
+      detalles: this.detalles().map(({ nombreProducto, ...resto }) => resto),
       pagos: this.pagos()
     };
 
-    console.log('Enviando venta:', datos);
-
-    this.ventasService.funGuardar(datos).subscribe({
-      next: () => this.reset(),
-      error: (err) => {
-        alert('Error al guardar. Revisa la consola.');
-        console.error(err);
-      }
-    });
+    if (this.idVentaSeleccionada) {
+      this.ventasService.funEditar(datos, this.idVentaSeleccionada).subscribe({
+        next: () => this.finalizarOperacion(),
+        error: (err: any) => {  // corregido el tipo any
+          const texto = err.error?.message || 'Error al actualizar la venta.';
+          this.errorServidor.set(texto);
+          setTimeout(() => this.errorServidor.set(''), 10000);
+        }
+      });
+    } else {
+      this.ventasService.funGuardar(datos).subscribe({
+        next: (res: any) => {
+          if (res.alertas && res.alertas.length > 0) {
+            this.alertasStock.set(res.alertas);
+            setTimeout(() => this.alertasStock.set([]), 10000);
+          }
+          this.finalizarOperacion();
+        },
+        error: (err: any) => {  // corregido el tipo any
+          const texto = err.error?.message || 'Error al guardar la venta.';
+          this.errorServidor.set(texto);
+          setTimeout(() => this.errorServidor.set(''), 10000);
+        }
+      });
+    }
   }
 
-  eliminarVenta(id: number) {
-    if (confirm('¿Eliminar venta?'))
-      this.ventasService.funEliminar(id).subscribe(() => this.listarTodo());
-  }
-
-  reset() {
+  finalizarOperacion() {
     this.listarTodo();
+    this.cerrarModal();
+  }
+
+  ventaEliminar(id: number) {
+    this.idParaEliminar = id;
+    this.confirmarEliminarOpen.set(true);
+  }
+
+  eliminarVenta() {
+    if (this.idParaEliminar) {
+      this.ventasService.funEliminar(this.idParaEliminar).subscribe({
+        next: () => {
+          this.listarTodo();
+          this.cerrarConfirmacion();
+        },
+        error: (err: any) => console.error('Error al eliminar:', err)
+      });
+    }
+  }
+
+  cerrarConfirmacion() {
+    this.confirmarEliminarOpen.set(false);
+    this.idParaEliminar = 0;
+  }
+
+  cerrarModal() {
+    this.isOpen.set(false);
     this.ventaForm.reset();
     this.detalleForm.reset();
     this.pagoForm.reset({ metodo: 'efectivo' });
     this.detalles.set([]);
     this.pagos.set([]);
-    this.isOpen = false;
-    this.paginaActual.set(1);
+    this.idVentaSeleccionada = 0;
+    this.errorServidor.set('');
   }
 }
