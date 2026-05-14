@@ -1,10 +1,17 @@
 <div class="p-6 bg-white rounded-lg shadow relative">
   
-  @if (mensajeAlerta()) {
-    <div class="absolute top-4 right-4 z-50 flex items-center p-4 rounded-lg shadow-md transition-all border"
+  @if (errorServidor()) {
+    <div class="fixed top-6 right-6 z-[100] flex items-center p-4 rounded-lg shadow-xl transition-all border animate-bounce"
          [class]="tipoAlerta() === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'">
-      <span class="text-sm font-semibold">{{ mensajeAlerta() }}</span>
-      <button (click)="mensajeAlerta.set(null)" class="ml-3 font-bold text-xs opacity-70 hover:opacity-100">✕</button>
+      <div class="flex items-center gap-2">
+        @if (tipoAlerta() === 'error') {
+          <span class="text-xl">⚠️</span>
+        } @else {
+          <span class="text-xl">✅</span>
+        }
+        <span class="text-sm font-bold">{{ errorServidor() }}</span>
+      </div>
+      <button (click)="errorServidor.set(null)" class="ml-4 font-bold text-xs opacity-70 hover:opacity-100">✕</button>
     </div>
   }
 
@@ -12,61 +19,49 @@
     <h2 class="text-2xl font-bold text-emerald-900 tracking-wide">GESTIÓN DE STOCK</h2>
     
     <div class="flex flex-wrap items-center gap-3">
-      <select [formControl]="sucursalControl" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700 bg-white">
+      <select [formControl]="sucursalControl" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700 bg-white cursor-pointer">
         <option value="">Todas las Sucursales</option>
         @for (suc of sucursales(); track suc.id) {
           <option [value]="suc.id">{{ suc.nombre }}</option>
         }
       </select>
       
-      <button (click)="aplicarFiltroSucursal()" class="bg-emerald-800 hover:bg-emerald-900 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow">
+      <button (click)="aplicarFiltroSucursal()" class="bg-emerald-800 hover:bg-emerald-900 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow-md">
         APLICAR
       </button>
 
-      <button (click)="abrirModalNuevoStock()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow flex items-center gap-1">
+      <button (click)="abrirModalNuevo()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow-md flex items-center gap-1">
         <span class="text-base font-bold">+</span> Añadir Producto
       </button>
     </div>
 
     <div class="relative flex items-center gap-1">
       <div class="relative">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </span>
         <input 
           type="text" 
           [formControl]="buscadorControl" 
           (focus)="mostrarSugerenciasPrincipal.set(true)"
-          (keyup.enter)="ejecutarBusquedaPrincipal()"
+          (keyup.enter)="ejecutarBusqueda()"
           placeholder="Escribe un producto..." 
-          class="border border-gray-300 rounded-l px-4 py-2 pl-9 pr-8 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-emerald-700"
+          class="border border-gray-300 rounded-l px-4 py-2 pl-4 pr-8 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-emerald-700"
         >
         @if (buscadorControl.value) {
-          <button 
-            (click)="limpiarBuscadorPrincipal()" 
-            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 text-xs">
-            ✕
-          </button>
+          <button (click)="buscadorControl.setValue(''); ejecutarBusqueda()" 
+                  class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 text-xs">✕</button>
         }
 
         @if (mostrarSugerenciasPrincipal() && sugerenciasBuscadorPrincipal().length > 0) {
           <div class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl z-50 max-h-48 overflow-y-auto">
             @for (sug of sugerenciasBuscadorPrincipal(); track sug) {
-              <div 
-                (click)="seleccionarSugerenciaPrincipal(sug)"
-                class="px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer transition-colors">
+              <div (click)="buscadorControl.setValue(sug); ejecutarBusqueda()"
+                   class="px-3 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-950 cursor-pointer">
                 {{ sug }}
               </div>
             }
           </div>
         }
       </div>
-      
-      <button 
-        (click)="ejecutarBusquedaPrincipal()" 
-        class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2 rounded-r text-sm transition-colors shadow">
+      <button (click)="ejecutarBusqueda()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2 rounded-r text-sm shadow-md">
         BUSCAR
       </button>
     </div>
@@ -86,139 +81,88 @@
       <tbody class="divide-y divide-gray-100 bg-white">
         @for (elemento of stockPaginado(); track elemento.id) {
           <tr class="hover:bg-gray-50 transition-colors"
-              [class.bg-emerald-50\/30]="terminoBusquedaActivo() && elemento.producto?.nombre?.toLowerCase().includes(terminoBusquedaActivo())">
-            <td class="px-6 py-4 text-sm font-medium text-gray-900">
-              {{ elemento.producto?.nombre || 'Producto no asignado' }}
-            </td>
-            <td class="px-6 py-4 text-sm font-bold text-gray-700">
-              {{ elemento.producto?.precio || '0.00' }} Bs
-            </td>
-            <td class="px-6 py-4 text-sm text-gray-500">
-              {{ elemento.producto?.categoria?.nombre || elemento.producto?.categoria || 'Sin categoría' }}
-            </td>
+              [class.bg-emerald-50\/30]="terminoBusquedaActivo() && elemento.producto?.nombre?.toLowerCase().includes(terminoBusquedaActivo().toLowerCase())">
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ elemento.producto?.nombre }}</td>
+            <td class="px-6 py-4 text-sm font-bold text-gray-700">{{ elemento.producto?.precio }} Bs</td>
+            <td class="px-6 py-4 text-sm text-gray-500">{{ elemento.producto?.categoria?.nombre || 'Sin categoría' }}</td>
             <td class="px-6 py-4">
               <div class="flex items-center space-x-3">
-                <button (click)="modificarCambioTemporal(elemento.id, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full font-bold transition-colors">-</button>
+                <button (click)="modificarCambioTemporal(elemento.id, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-bold hover:bg-gray-200">-</button>
                 <span class="text-sm font-semibold w-12 text-center" [class.text-red-600]="elemento.cantidad === 0">
                   {{ elemento.cantidad + (cambiosTemporales()[elemento.id] || 0) }}
                 </span>
-                <button (click)="modificarCambioTemporal(elemento.id, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full font-bold transition-colors">+</button>
+                <button (click)="modificarCambioTemporal(elemento.id, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-bold hover:bg-gray-200">+</button>
                 @if (cambiosTemporales()[elemento.id]) {
-                  <span class="text-xs font-bold text-orange-600">
-                    ({{ cambiosTemporales()[elemento.id] > 0 ? '+' : '' }}{{ cambiosTemporales()[elemento.id] }})
-                  </span>
+                  <span class="text-xs font-bold text-orange-600">({{ cambiosTemporales()[elemento.id] > 0 ? '+' : '' }}{{ cambiosTemporales()[elemento.id] }})</span>
                 }
               </div>
             </td>
             <td class="px-6 py-4">
-              <button 
-                (click)="solicitarConfirmacion(elemento)"
-                [disabled]="!(cambiosTemporales()[elemento.id])"
-                class="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-semibold disabled:bg-gray-200 disabled:text-gray-400 hover:bg-emerald-800 transition-all shadow-sm">
+              <button (click)="solicitarConfirmacion(elemento)" [disabled]="!(cambiosTemporales()[elemento.id])"
+                      class="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-semibold disabled:bg-gray-200">
                 Enviar
               </button>
             </td>
           </tr>
         } @empty {
-          <tr>
-            <td colspan="5" class="text-center py-12 text-gray-400 text-sm italic">
-              No se encontraron registros de stock que coincidan con la búsqueda.
-            </td>
-          </tr>
+          <tr><td colspan="5" class="text-center py-12 text-gray-400 italic">No se encontraron productos.</td></tr>
         }
       </tbody>
     </table>
   </div>
-
+  
   <div class="flex justify-between items-center mt-4 text-xs font-medium text-gray-500 px-2">
-    <div>TOTAL ITEMS FILTRADOS: {{ stockFiltrado().length }}</div>
+    <div>TOTAL: {{ stockFiltrado().length }}</div>
     <div class="flex items-center space-x-2">
-      <button [disabled]="paginaActual() === 1" (click)="paginaActual.set(paginaActual() - 1)" class="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40">◀</button>
-      <span>Página {{ paginaActual() }} de {{ totalPaginas() || 1 }}</span>
-      <button [disabled]="paginaActual() >= totalPaginas()" (click)="paginaActual.set(paginaActual() + 1)" class="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40">▶</button>
+      <button [disabled]="paginaActual() === 1" (click)="paginaActual.set(paginaActual() - 1)" class="p-1 rounded bg-gray-100 disabled:opacity-40">◀</button>
+      <span>Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+      <button [disabled]="paginaActual() >= totalPaginas()" (click)="paginaActual.set(paginaActual() + 1)" class="p-1 rounded bg-gray-100 disabled:opacity-40">▶</button>
     </div>
   </div>
 </div>
 
-@if (modalConfirmacion.visible) {
+@if (isOpen()) {
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl max-w-md w-full shadow-2xl p-6 border border-gray-100">
-      <h3 class="text-lg font-bold text-gray-900 mb-2">Confirmar Ajuste de Inventario</h3>
-      <p class="text-sm text-gray-600 mb-6 leading-relaxed">
-        ¿Estás seguro de que deseas modificar el stock de 
-        <span class="font-bold text-gray-900">"{{ modalConfirmacion.registro?.producto?.nombre }}"</span>? 
-        Se aplicará una variación de 
-        <span [class]="(modalConfirmacion.cantidad ?? 0) > 0 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'">
-          {{ (modalConfirmacion.cantidad ?? 0) > 0 ? '+' : '' }}{{ modalConfirmacion.cantidad }}
-        </span> unidades sobre la sucursal seleccionada.
-      </p>
-      <div class="flex justify-end space-x-3">
-        <button (click)="cerrarModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors">
-          Cancelar
-        </button>
-        <button (click)="procesarGuardadoStock()" class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold rounded-lg transition-colors shadow shadow-emerald-900/20">
-          Sí, Confirmar
-        </button>
+    <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+      <h3 class="text-lg font-bold text-emerald-950 mb-4">Añadir a Sucursal Seleccionada</h3>
+      <div class="space-y-4">
+        <div class="relative">
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Buscar Producto</label>
+          <input type="text" [value]="busquedaComboProducto()" (focus)="mostrarDropdownCombo.set(true)"
+                 (input)="busquedaComboProducto.set($any($event.target).value); mostrarDropdownCombo.set(true)"
+                 placeholder="Escribe el nombre..." class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-700 outline-none">
+          @if (mostrarDropdownCombo() && productosDisponiblesParaAsignar().length > 0) {
+            <div class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl max-h-40 overflow-y-auto z-50">
+              @for (p of productosDisponiblesParaAsignar(); track p.id) {
+                <div (click)="modalNuevoStock.productoId = p.id; busquedaComboProducto.set(p.nombre); mostrarDropdownCombo.set(false)"
+                     class="px-3 py-2 text-sm hover:bg-emerald-50 cursor-pointer border-b last:border-0">{{ p.nombre }}</div>
+              }
+            </div>
+          }
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Inicial</label>
+          <input type="number" [(ngModel)]="modalNuevoStock.cantidadInicial" class="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-700 outline-none">
+        </div>
+      </div>
+      <div class="flex justify-end space-x-3 mt-6">
+        <button (click)="isOpen.set(false)" class="px-4 py-2 bg-gray-100 rounded-lg text-xs font-bold">Cancelar</button>
+        <button (click)="guardarNuevoStock()" [disabled]="!modalNuevoStock.productoId" 
+                class="px-4 py-2 bg-emerald-800 text-white rounded-lg text-xs font-bold disabled:bg-gray-200">Añadir Stock</button>
       </div>
     </div>
   </div>
 }
 
-@if (modalNuevoStock.visible) {
+
+@if (confirmarEliminarOpen()) {
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl max-w-md w-full shadow-2xl p-6 border border-gray-100 relative">
-      <h3 class="text-lg font-bold text-emerald-950 mb-4">Asignar Producto a Sucursal</h3>
-      
-      <div class="space-y-4">
-        <div class="relative">
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Seleccionar Producto</label>
-          <input 
-            type="text"
-            [value]="busquedaComboProducto()"
-            (focus)="mostrarDropdownCombo.set(true)"
-            (input)="busquedaComboProducto.set($any($event.target).value); mostrarDropdownCombo.set(true)"
-            placeholder="-- Escribe el nombre para buscar --"
-            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700 bg-white"
-          />
-
-          @if (mostrarDropdownCombo() && productosDisponiblesParaAsignar().length > 0) {
-            <div class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl max-h-40 overflow-y-auto z-50">
-              @for (p of productosDisponiblesParaAsignar(); track p.id) {
-                <div 
-                  (click)="seleccionarProductoCombo(p)"
-                  class="px-3 py-2 text-sm hover:bg-emerald-50 text-gray-700 hover:text-emerald-900 cursor-pointer transition-colors">
-                  {{ p.nombre }} - {{ p.precio }} Bs
-                </div>
-              }
-            </div>
-          } @else if (mostrarDropdownCombo() && busquedaComboProducto().trim() !== '' && productosDisponiblesParaAsignar().length === 0) {
-            <div class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-xl p-3 text-center text-xs text-gray-400 italic z-50">
-              No hay más productos disponibles con ese nombre
-            </div>
-          }
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cantidad Inicial en Tienda</label>
-          <input type="number" [(ngModel)]="modalNuevoStock.cantidadInicial" min="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Alerta Stock Mínimo</label>
-          <input type="number" [(ngModel)]="modalNuevoStock.stockMinimo" min="1" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-700">
-        </div>
-      </div>
-
-      <div class="flex justify-end space-x-3 mt-6">
-        <button (click)="cerrarModalNuevoStock()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors">
-          Cancelar
-        </button>
-        <button 
-          (click)="guardarNuevoStock()" 
-          [disabled]="!modalNuevoStock.productoId" 
-          class="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold rounded-lg transition-colors shadow disabled:bg-gray-200 disabled:text-gray-400">
-          Guardar en Inventario
-        </button>
+    <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+      <h3 class="text-lg font-bold mb-2">Confirmar Ajuste</h3>
+      <p class="text-sm text-gray-600 mb-6">¿Deseas modificar el stock de <b>{{ modalConfirmacion.registro?.producto?.nombre }}</b> por <b>{{ modalConfirmacion.cantidad }}</b> unidades?</p>
+      <div class="flex justify-end space-x-3">
+        <button (click)="confirmarEliminarOpen.set(false)" class="px-4 py-2 bg-gray-100 rounded-lg text-xs font-bold">Cancelar</button>
+        <button (click)="procesarGuardadoStock()" class="px-4 py-2 bg-emerald-800 text-white rounded-lg text-xs font-bold">Confirmar</button>
       </div>
     </div>
   </div>
