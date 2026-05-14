@@ -17,45 +17,36 @@ export class Stock {
   private productosService = inject(ProductoService);
   private categoriasService = inject(CategoriaService);
 
-  // Signals de Datos Dinámicos
   productosStock = signal<any[]>([]);
   sucursales = signal<any[]>([]);
   productosGlobales = signal<any[]>([]); 
   categorias = signal<any[]>([]); 
   
-  // Guardado de variaciones numéricas temporales { [idStock]: +5 o -3 }
   cambiosTemporales = signal<{ [key: number]: number }>({});
 
-  // Controles de Filtrado Principal
   sucursalControl = new FormControl('');
   buscadorControl = new FormControl('');
   
-  // Almacena el término confirmado tras pulsar "Buscar"
   terminoBusquedaActivo = signal<string>('');
   mostrarSugerenciasPrincipal = signal<boolean>(false);
   sucursalFiltradaActual = signal<string>('');
 
-  // Control de búsqueda interna para el Combo-Box del Modal
   busquedaComboProducto = signal<string>('');
   productoSeleccionadoNombre = signal<string>('');
   mostrarDropdownCombo = signal<boolean>(false);
 
-  // Control de Alertas Embebidas
   mensajeAlerta = signal<string | null>(null);
   tipoAlerta = signal<'success' | 'error'>('error');
 
-  // Paginación
   paginaActual = signal(1);
   itemsPorPagina = 5;
 
-  // Estado del Modal de Confirmación (Ajuste de Stock)
   modalConfirmacion = {
     visible: false,
     registro: null as any,
     cantidad: 0 as number | null
   };
 
-  // Estado del Modal Nuevo (Añadir Producto a Sucursal)
   modalNuevoStock = {
     visible: false,
     productoId: null as number | null,
@@ -97,20 +88,16 @@ export class Stock {
     setTimeout(() => this.mensajeAlerta.set(null), 4000);
   }
 
-  // --- SUGERENCIAS EN TIEMPO REAL PARA EL BUSCADOR PRINCIPAL ---
   sugerenciasBuscadorPrincipal = computed(() => {
     const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
     if (!query) return [];
-    
-    // Retorna coincidencias basadas en los productos del stock actual
     return this.productosStock()
       .filter(p => p.producto?.nombre?.toLowerCase().includes(query))
       .map(p => p.producto?.nombre)
-      .filter((value, index, self) => self.indexOf(value) === index) // Remover duplicados
-      .slice(0, 5); // Limitar a 5 sugerencias
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .slice(0, 5);
   });
 
-  // --- EJECUTAR BÚSQUEDA EXPLICITA (AL PULSAR EL BOTÓN) ---
   ejecutarBusquedaPrincipal() {
     const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
     this.terminoBusquedaActivo.set(query);
@@ -118,10 +105,7 @@ export class Stock {
     this.paginaActual.set(1);
 
     if (query) {
-      // 1. Verificar si el producto existe globalmente
       const existeGlobalmente = this.productosGlobales().some(p => p.nombre?.toLowerCase().includes(query));
-      
-      // 2. Verificar si existe en el stock filtrado de la sucursal actual
       const sucursalId = this.sucursalFiltradaActual();
       let listadoSucursal = this.productosStock();
       if (sucursalId) {
@@ -152,7 +136,6 @@ export class Stock {
     this.paginaActual.set(1);
   }
 
-  // --- LÓGICA DEL COMBO-BOX DEL MODAL ---
   productosDisponiblesParaAsignar = computed(() => {
     const sucursalId = Number(this.sucursalFiltradaActual());
     if (!sucursalId) return [];
@@ -178,7 +161,6 @@ export class Stock {
     this.busquedaComboProducto.set(producto.nombre); 
   }
 
-  // --- FILTRADO, ORDENACIÓN Y ORDEN DE PRIORIDAD EN LA TABLA ---
   stockFiltrado = computed(() => {
     let listado = [...this.productosStock()];
     const query = this.terminoBusquedaActivo();
@@ -188,7 +170,6 @@ export class Stock {
       listado = listado.filter(p => p.sucursalId === Number(sucursalId));
     }
 
-    // Clasificación y Ordenación Avanzada
     return listado.sort((a, b) => {
       const nombreA = (a.producto?.nombre ?? '').toLowerCase();
       const nombreB = (b.producto?.nombre ?? '').toLowerCase();
@@ -197,19 +178,16 @@ export class Stock {
         const coincideA = nombreA.includes(query);
         const coincideB = nombreB.includes(query);
 
-        // Si uno coincide con la búsqueda y el otro no, va primero el coincidente (Pin to top)
         if (coincideA && !coincideB) return -1;
         if (!coincideA && coincideB) return 1;
       }
 
-      // Ordenación secundaria por defecto (Stock cero al final, mayores cantidades arriba)
       if (a.cantidad === 0 && b.cantidad > 0) return 1; 
       if (a.cantidad > 0 && b.cantidad === 0) return -1; 
       return b.cantidad - a.cantidad; 
     });
   });
 
-  // --- PAGINACIÓN ---
   stockPaginado = computed(() => {
     const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
     const fin = inicio + this.itemsPorPagina;
@@ -218,7 +196,6 @@ export class Stock {
 
   totalPaginas = computed(() => Math.ceil(this.stockFiltrado().length / this.itemsPorPagina));
 
-  // --- GESTIÓN DE MODALES NUEVOS ---
   abrirModalNuevoStock() {
     if (!this.sucursalFiltradaActual()) {
       this.lanzarAlerta("Por favor, selecciona y aplica una sucursal primero antes de añadir productos.");
@@ -261,7 +238,6 @@ export class Stock {
     });
   }
 
-  // --- GESTIÓN DE CANTIDADES EXISTENTES ---
   modificarCambioTemporal(id: number, valor: number) {
     const mapaActual = { ...this.cambiosTemporales() };
     const variacionActual = mapaActual[id] || 0;
@@ -308,7 +284,7 @@ export class Stock {
     const payload = {
       productoId: Number(registro.productoId),
       sucursalId: Number(registro.sucursalId),
-      cantidadModificada: Number(cantidad)
+      cantidad: Number(registro.cantidad)
     };
 
     this.stockService.actualizarUnidades(payload).subscribe({
