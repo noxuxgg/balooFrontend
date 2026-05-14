@@ -1,6 +1,5 @@
 <div class="p-6 bg-white rounded-lg shadow relative">
   
-  <!-- Alertas del sistema Baloo corregidas -->
   @if (errorServidor()) {
     <div class="fixed top-6 right-6 z-[100] flex items-center p-4 rounded-lg shadow-xl transition-all border animate-bounce"
          [class]="tipoAlerta() === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'">
@@ -31,13 +30,11 @@
         APLICAR
       </button>
 
-      <!-- Botón Añadir con Validación de Sucursal -->
       <button (click)="abrirModalNuevo()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow-md flex items-center gap-1">
         <span class="text-base font-bold">+</span> Añadir Producto
       </button>
     </div>
 
-    <!-- Buscador -->
     <div class="relative flex items-center gap-1">
       <div class="relative">
         <input 
@@ -70,7 +67,6 @@
     </div>
   </div>
 
-  <!-- Tabla -->
   <div class="overflow-x-auto rounded-lg border border-gray-100 shadow-sm">
     <table class="w-full text-left border-collapse">
       <thead>
@@ -115,7 +111,6 @@
     </table>
   </div>
   
-  <!-- Paginación -->
   <div class="flex justify-between items-center mt-4 text-xs font-medium text-gray-500 px-2">
     <div>TOTAL: {{ stockFiltrado().length }}</div>
     <div class="flex items-center space-x-2">
@@ -126,7 +121,6 @@
   </div>
 </div>
 
-<!-- Modal Nuevo Stock corregido -->
 @if (isOpen()) {
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
@@ -160,7 +154,7 @@
   </div>
 }
 
-<!-- Modal Confirmación de Ajuste -->
+
 @if (confirmarEliminarOpen()) {
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">

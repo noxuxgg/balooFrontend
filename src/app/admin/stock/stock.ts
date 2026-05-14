@@ -63,30 +63,25 @@ export class Stock {
     setTimeout(() => this.errorServidor.set(null), 3000);
   }
 
-  // --- Lógica de Botones y Validaciones ---
-
+  
   aplicarFiltroSucursal() {
     const valorSeleccionado = this.sucursalControl.value;
     this.sucursalFiltradaActual.set(valorSeleccionado ?? '');
     this.paginaActual.set(1);
     
-    // Feedback de usuario: Mensaje de tabla actualizada
     this.lanzarAlerta("Tabla actualizada", "success");
   }
 
   abrirModalNuevo() {
-    // Validación obligatoria: Debe haber una sucursal seleccionada en el filtro
     if (!this.sucursalFiltradaActual()) {
       this.lanzarAlerta("Primero debe escoger una sucursal obligatoriamente", "error");
       return;
     }
-    // Si pasa la validación, resetear modal y abrir
     this.modalNuevoStock = { productoId: null, cantidadInicial: 1, stockMinimo: 5 };
     this.busquedaComboProducto.set('');
     this.isOpen.set(true);
   }
 
-  // --- Filtrado y Búsqueda ---
 
   sugerenciasBuscadorPrincipal = computed(() => {
     const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
@@ -127,8 +122,7 @@ export class Stock {
     this.mostrarSugerenciasPrincipal.set(false);
   }
 
-  // --- Gestión de Stock ---
-
+  
   modificarCambioTemporal(id: number, valor: number) {
     const mapa = { ...this.cambiosTemporales() };
     const registro = this.productosStock().find(p => p.id === id);
@@ -168,11 +162,10 @@ export class Stock {
   guardarNuevoStock() {
     if (!this.modalNuevoStock.productoId) return;
 
-    // Ajustado: enviamos "cantidad" en lugar de "cantidadInicial"
     const payload = {
       productoId: this.modalNuevoStock.productoId,
       sucursalId: Number(this.sucursalFiltradaActual()),
-      cantidad: this.modalNuevoStock.cantidadInicial, // Renombrado aquí
+      cantidad: this.modalNuevoStock.cantidadInicial, 
       stockMinimo: this.modalNuevoStock.stockMinimo
     };
 
