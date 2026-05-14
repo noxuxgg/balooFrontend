@@ -10,7 +10,6 @@ export class StockService {
   private readonly urlBase = environment.urlBase;
   http = inject(HttpClient);
 
-  // Reutiliza este para tu método de listar en vez de tener dos repetidos
   findAll() {
     return this.http.get<Stock[]>(`${this.urlBase}/stock`);
   }
@@ -27,9 +26,7 @@ export class StockService {
     return this.http.delete(`${this.urlBase}/stock/${id}`);
   }
 
-  // CORREGIDO: Ahora usa 'urlBase' y apunta correctamente al endpoint de NestJS
-  actualizarUnidades(payload: { productoId: number; sucursalId: number; cantidadModificada: number }) {
-    // Asegúrate de usar la sub-ruta correcta de tu API y pasarle el payload completo en el body
+  actualizarUnidades(payload: { productoId: number; sucursalId: number; cantidad: number }) {
     return this.http.patch(`http://localhost:3000/stock/actualizar-unidades`, payload);
   }
 }
