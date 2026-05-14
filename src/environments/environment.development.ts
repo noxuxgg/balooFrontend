@@ -1,5 +1,5 @@
 export const environment = {
     production: false,
-    servidor: 'http://localhost:3000'
+    urlBase: 'http://localhost:3000'
     //servidor
 };
