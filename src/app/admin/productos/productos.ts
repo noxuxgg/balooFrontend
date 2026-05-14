@@ -14,11 +14,9 @@ export class Productos implements OnInit {
   private productoService = inject(ProductoService);
   private categoriaService = inject(CategoriaService);
 
-  // --- DATOS ---
   productos = signal<any[]>([]);
   categorias = signal<any[]>([]);
   
-  // --- UI STATES ---
   isOpen = signal(false); // Modal principal
   confirmarEliminarOpen = signal(false); // Modal de advertencia
   mensajeAlerta = signal<string | null>(null);
@@ -26,10 +24,8 @@ export class Productos implements OnInit {
   idParaEliminar = signal<number | null>(null);
   tipoAEliminar = signal<'producto' | 'categoria'>('producto');
 
-  // --- FORM CONTROLS ---
   buscadorControl = new FormControl('');
   
-  // --- OBJETOS PARA FORMULARIOS ---
   nuevoProducto = { id: 0, nombre: '', precio: 0, categoriaId: 0 };
   nuevaCategoria = { id: 0, nombre: '', descripcion: '' };
 
@@ -50,7 +46,6 @@ export class Productos implements OnInit {
     setTimeout(() => this.mensajeAlerta.set(null), 3000);
   }
 
-  // --- CRUD PRODUCTOS ---
   abrirModalProducto(prod: any = null) {
     if (prod) {
       this.nuevoProducto = { ...prod, categoriaId: Number(prod.categoriaId) };
@@ -60,9 +55,7 @@ export class Productos implements OnInit {
     this.isOpen.set(true);
   }
 
-  // --- CRUD PRODUCTOS (Actualizado para que funcione el EDITAR) ---
   guardarProducto() {
-    // Aseguramos que los tipos de datos sean correctos para NestJS/PostgreSQL
     const data = { 
       nombre: this.nuevoProducto.nombre,
       precio: Number(this.nuevoProducto.precio),
@@ -72,7 +65,6 @@ export class Productos implements OnInit {
     const idActual = this.nuevoProducto.id;
 
     if (idActual && idActual !== 0) {
-      // CASO: ACTUALIZAR
       this.productoService.funEditar(data, idActual).subscribe({
         next: () => { 
           this.lanzarAlerta('¡Producto actualizado con éxito!'); 
@@ -84,7 +76,6 @@ export class Productos implements OnInit {
         }
       });
     } else {
-      // CASO: CREAR NUEVO
       this.productoService.funGuardar(data).subscribe({
         next: () => { 
           this.lanzarAlerta('¡Producto creado con éxito!'); 
@@ -98,7 +89,6 @@ export class Productos implements OnInit {
     }
   }
 
-  // --- CRUD CATEGORÍAS ---
   guardarCategoria() {
     const obs = this.nuevaCategoria.id && this.nuevaCategoria.id !== 0
       ? this.categoriaService.funEditar(this.nuevaCategoria, this.nuevaCategoria.id)
@@ -114,7 +104,6 @@ export class Productos implements OnInit {
     });
   }
 
-  // --- LÓGICA DE ELIMINACIÓN REFORZADA ---
   prepararEliminacion(id: number, tipo: 'producto' | 'categoria' = 'producto') {
     this.idParaEliminar.set(id);
     this.tipoAEliminar.set(tipo);
@@ -152,7 +141,6 @@ export class Productos implements OnInit {
     this.idParaEliminar.set(null);
   }
 
-  // --- AUXILIARES ---
   esFormularioValido(): boolean {
     return (
       this.nuevoProducto.nombre.length >= 3 && 

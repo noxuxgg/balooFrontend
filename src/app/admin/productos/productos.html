@@ -1,5 +1,4 @@
 <div class="p-6 max-w-4xl mx-auto">
-  <!-- Cabecera -->
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-bold text-[#013924] tracking-tight uppercase italic">GESTIÓN DE PRODUCTOS</h2>
     <button (click)="abrirModalProducto()"
@@ -8,7 +7,6 @@
     </button>
   </div>
 
-  <!-- LA TABLA (Recuperada) -->
   <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 mb-10">
     <table class="w-full text-left">
       <thead class="bg-[#013924] text-white text-xs uppercase tracking-widest">
@@ -41,7 +39,6 @@
     </table>
   </div>
 
-  <!-- Modal Principal (Producto + Categorías) -->
   @if (isOpen()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
     <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 pb-4 overflow-y-auto max-h-[90vh] border border-gray-100">
@@ -51,7 +48,7 @@
         <button (click)="isOpen.set(false)" class="text-gray-300 hover:text-red-500 text-3xl transition-colors">&times;</button>
       </div>
 
-      <!-- Formulario Producto -->
+      
       <div class="space-y-6 mb-8">
         <div class="relative">
           <label class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Nombre</label>
@@ -78,7 +75,7 @@
         </button>
       </div>
 
-      <!-- Gestión de Categorías Inferior -->
+      
       <div class="bg-gray-50/50 rounded-[2rem] p-6 border border-gray-100 shadow-inner">
         <p class="text-xs font-black text-gray-400 uppercase text-center mb-6 tracking-widest">CATEGORÍAS</p>
         <div class="space-y-4 mb-6">
@@ -104,7 +101,6 @@
   </div>
   }
 
-  <!-- MODAL DE CONFIRMACIÓN (DISEÑO image_bd4c55.png) -->
   @if (confirmarEliminarOpen()) {
   <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
     <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-[320px] p-10 text-center border border-gray-100 animate-in fade-in zoom-in duration-200">
