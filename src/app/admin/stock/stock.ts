@@ -1,5 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+// Servicios del ecosistema Baloo
 import { StockService } from '../../core/services/stock.service';
 import { ProductoService } from '../../core/services/productos.service';
 import { CategoriaService } from '../../core/services/categorias.service';
@@ -8,7 +10,7 @@ import { SucursalService } from '../../core/services/sucursales.service';
 @Component({
   selector: 'app-stock',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './stock.html',
 })
 export class Stock {
@@ -17,293 +19,130 @@ export class Stock {
   private productosService = inject(ProductoService);
   private categoriasService = inject(CategoriaService);
 
+  // Señales de Datos
   productosStock = signal<any[]>([]);
   sucursales = signal<any[]>([]);
   productosGlobales = signal<any[]>([]); 
   categorias = signal<any[]>([]); 
   
-  cambiosTemporales = signal<{ [key: number]: number }>({});
-
+  // Controles y Estados
   sucursalControl = new FormControl('');
   buscadorControl = new FormControl('');
+  busquedaComboProducto = signal('');
   
-  terminoBusquedaActivo = signal<string>('');
-  mostrarSugerenciasPrincipal = signal<boolean>(false);
-  sucursalFiltradaActual = signal<string>('');
+  isOpen = signal(false); 
+  confirmarEliminarOpen = signal(false); 
+  mostrarSugerenciasPrincipal = signal(false);
+  mostrarDropdownCombo = signal(false);
 
-  busquedaComboProducto = signal<string>('');
-  productoSeleccionadoNombre = signal<string>('');
-  mostrarDropdownCombo = signal<boolean>(false);
-
-  mensajeAlerta = signal<string | null>(null);
-  tipoAlerta = signal<'success' | 'error'>('error');
-
+  // Paginación y Filtros
   paginaActual = signal(1);
   itemsPorPagina = 5;
+  terminoBusquedaActivo = signal('');
+  sucursalFiltradaActual = signal('');
+  cambiosTemporales = signal<{ [key: number]: number }>({});
 
-  modalConfirmacion = {
-    visible: false,
-    registro: null as any,
-    cantidad: 0 as number | null
-  };
+  // Modales
+  modalConfirmacion = { registro: null as any, cantidad: 0 };
+  modalNuevoStock = { productoId: null as number | null, cantidadInicial: 1, stockMinimo: 5 };
 
-  modalNuevoStock = {
-    visible: false,
-    productoId: null as number | null,
-    cantidadInicial: 1,
-    stockMinimo: 5
-  };
+  // Alertas
+  errorServidor = signal<string | null>(null);
+  tipoAlerta = signal<'success' | 'error'>('error');
 
   constructor() {
     this.cargarDatosIniciales();
   }
 
   cargarDatosIniciales() {
-    this.stockService.findAll().subscribe((res: any) => {
-      this.productosStock.set(res);
-    });
-    
-    this.sucursalService.funListar().subscribe((res: any) => {
-      this.sucursales.set(res);
-    });
-
-    this.productosService.funListarProductos().subscribe((res: any) => {
-      this.productosGlobales.set(res);
-    });
-
-    this.categoriasService.funListar().subscribe((res: any) => {
-      this.categorias.set(res);
-    });
+    this.stockService.funListar().subscribe((res: any) => this.productosStock.set(res));
+    this.sucursalService.funListar().subscribe((res: any) => this.sucursales.set(res));
+    this.productosService.funListar().subscribe((res: any) => this.productosGlobales.set(res));
+    this.categoriasService.funListar().subscribe((res: any) => this.categorias.set(res));
   }
 
-  obtenerNombreCategoria(categoriaId: number | undefined): string {
-    if (!categoriaId) return 'Sin categoría';
-    const cat = this.categorias().find(c => c.id === categoriaId);
-    return cat ? cat.nombre : 'Sin categoría';
-  }
+  // --- LÓGICA COMPUTADA (CORREGIDA) ---
 
-  lanzarAlerta(mensaje: string, tipo: 'success' | 'error' = 'error') {
-    this.mensajeAlerta.set(mensaje);
-    this.tipoAlerta.set(tipo);
-    setTimeout(() => this.mensajeAlerta.set(null), 4000);
-  }
-
-  sugerenciasBuscadorPrincipal = computed(() => {
-    const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
-    if (!query) return [];
-    return this.productosStock()
-      .filter(p => p.producto?.nombre?.toLowerCase().includes(query))
-      .map(p => p.producto?.nombre)
-      .filter((value, index, self) => self.indexOf(value) === index)
-      .slice(0, 5);
-  });
-
-  ejecutarBusquedaPrincipal() {
-    const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
-    this.terminoBusquedaActivo.set(query);
-    this.mostrarSugerenciasPrincipal.set(false);
-    this.paginaActual.set(1);
-
-    if (query) {
-      const existeGlobalmente = this.productosGlobales().some(p => p.nombre?.toLowerCase().includes(query));
-      const sucursalId = this.sucursalFiltradaActual();
-      let listadoSucursal = this.productosStock();
-      if (sucursalId) {
-        listadoSucursal = listadoSucursal.filter(p => p.sucursalId === Number(sucursalId));
-      }
-      
-      const registroEnStock = listadoSucursal.find(p => p.producto?.nombre?.toLowerCase().includes(query));
-
-      if (!existeGlobalmente) {
-        this.lanzarAlerta(`El producto "${this.buscadorControl.value}" no existe en el catálogo general.`, 'error');
-      } else if (!registroEnStock) {
-        this.lanzarAlerta(`El producto existe pero no está asignado a la sucursal seleccionada.`, 'error');
-      } else if (registroEnStock.cantidad === 0) {
-        this.lanzarAlerta(`Advertencia: El producto "${registroEnStock.producto?.nombre}" no tiene unidades disponibles (Stock 0).`, 'error');
-      }
-    }
-  }
-
-  seleccionarSugerenciaPrincipal(nombre: string) {
-    this.buscadorControl.setValue(nombre);
-    this.ejecutarBusquedaPrincipal();
-  }
-
-  limpiarBuscadorPrincipal() {
-    this.buscadorControl.setValue('');
-    this.terminoBusquedaActivo.set('');
-    this.mostrarSugerenciasPrincipal.set(false);
-    this.paginaActual.set(1);
-  }
-
+  // Esta función resuelve el error TS2339
   productosDisponiblesParaAsignar = computed(() => {
-    const sucursalId = Number(this.sucursalFiltradaActual());
-    if (!sucursalId) return [];
-
-    const idsExistentes = this.productosStock()
-      .filter(s => s.sucursalId === sucursalId)
+    const busqueda = this.busquedaComboProducto().toLowerCase().trim();
+    const yaEnStock = this.productosStock()
+      .filter(s => s.sucursalId === Number(this.sucursalFiltradaActual()))
       .map(s => s.productoId);
 
-    let disponibles = this.productosGlobales().filter(p => !idsExistentes.includes(p.id));
-
-    const criterio = this.busquedaComboProducto().toLowerCase().trim();
-    if (criterio) {
-      disponibles = disponibles.filter(p => p.nombre?.toLowerCase().includes(criterio));
-    }
-
-    return disponibles;
+    return this.productosGlobales().filter(p => 
+      !yaEnStock.includes(p.id) && 
+      p.nombre.toLowerCase().includes(busqueda)
+    );
   });
 
-  seleccionarProductoCombo(producto: any) {
-    this.modalNuevoStock.productoId = producto.id;
-    this.productoSeleccionadoNombre.set(`${producto.nombre} - ${producto.precio} Bs`);
-    this.mostrarDropdownCombo.set(false);
-    this.busquedaComboProducto.set(producto.nombre); 
-  }
-
   stockFiltrado = computed(() => {
-    let listado = [...this.productosStock()];
-    const query = this.terminoBusquedaActivo();
-    const sucursalId = this.sucursalFiltradaActual();
-
-    if (sucursalId) {
-      listado = listado.filter(p => p.sucursalId === Number(sucursalId));
+    let lista = this.productosStock();
+    if (this.sucursalFiltradaActual()) {
+      lista = lista.filter(p => p.sucursalId === Number(this.sucursalFiltradaActual()));
     }
-
-    return listado.sort((a, b) => {
-      const nombreA = (a.producto?.nombre ?? '').toLowerCase();
-      const nombreB = (b.producto?.nombre ?? '').toLowerCase();
-
-      if (query) {
-        const coincideA = nombreA.includes(query);
-        const coincideB = nombreB.includes(query);
-
-        if (coincideA && !coincideB) return -1;
-        if (!coincideA && coincideB) return 1;
-      }
-
-      if (a.cantidad === 0 && b.cantidad > 0) return 1; 
-      if (a.cantidad > 0 && b.cantidad === 0) return -1; 
-      return b.cantidad - a.cantidad; 
-    });
+    const busqueda = this.terminoBusquedaActivo().toLowerCase();
+    if (busqueda) {
+      lista = lista.filter(p => p.producto?.nombre?.toLowerCase().includes(busqueda));
+    }
+    return lista;
   });
 
   stockPaginado = computed(() => {
     const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
-    const fin = inicio + this.itemsPorPagina;
-    return this.stockFiltrado().slice(inicio, fin);
+    return this.stockFiltrado().slice(inicio, inicio + this.itemsPorPagina);
   });
 
   totalPaginas = computed(() => Math.ceil(this.stockFiltrado().length / this.itemsPorPagina));
 
-  abrirModalNuevoStock() {
-    if (!this.sucursalFiltradaActual()) {
-      this.lanzarAlerta("Por favor, selecciona y aplica una sucursal primero antes de añadir productos.");
-      return;
-    }
-    this.modalNuevoStock.visible = true;
-    this.productoSeleccionadoNombre.set('');
-    this.busquedaComboProducto.set('');
-    this.mostrarDropdownCombo.set(false);
-  }
+  sugerenciasBuscadorPrincipal = computed(() => {
+    const query = (this.buscadorControl.value ?? '').toLowerCase().trim();
+    if (!query) return [];
+    return [...new Set(this.productosStock()
+      .filter(p => p.producto?.nombre?.toLowerCase().includes(query))
+      .map(p => p.producto?.nombre))].slice(0, 5);
+  });
 
-  cerrarModalNuevoStock() {
-    this.modalNuevoStock = { visible: false, productoId: null, cantidadInicial: 1, stockMinimo: 5 };
-    this.productoSeleccionadoNombre.set('');
-    this.busquedaComboProducto.set('');
-  }
-
-  guardarNuevoStock() {
-    if (!this.modalNuevoStock.productoId) {
-      this.lanzarAlerta("Debes seleccionar un producto válido usando el buscador del combo.");
-      return;
-    }
-
-    const payload = {
-      productoId: Number(this.modalNuevoStock.productoId),
-      sucursalId: Number(this.sucursalFiltradaActual()),
-      cantidad: Number(this.modalNuevoStock.cantidadInicial),
-      stockMinimo: Number(this.modalNuevoStock.stockMinimo)
-    };
-
-    this.stockService.funGuardarStock(payload).subscribe({
-      next: () => {
-        this.lanzarAlerta("Producto asignado correctamente al inventario.", "success");
-        this.cerrarModalNuevoStock();
-        this.cargarDatosIniciales();
-      },
-      error: () => {
-        this.lanzarAlerta("Ocurrió un error al intentar guardar el registro.");
-      }
-    });
+  // --- MÉTODOS DE ACCIÓN ---
+  aplicarFiltroSucursal() {
+    this.sucursalFiltradaActual.set(this.sucursalControl.value ?? '');
+    this.paginaActual.set(1);
   }
 
   modificarCambioTemporal(id: number, valor: number) {
-    const mapaActual = { ...this.cambiosTemporales() };
-    const variacionActual = mapaActual[id] || 0;
-    
+    const actual = this.cambiosTemporales()[id] || 0;
     const registro = this.productosStock().find(p => p.id === id);
-    if (!registro) return;
-
-    const nuevaVariacion = variacionActual + valor;
-    if (registro.cantidad + nuevaVariacion < 0) return;
-
-    if (nuevaVariacion === 0) {
-      delete mapaActual[id]; 
-    } else {
-      mapaActual[id] = nuevaVariacion;
+    if (registro && registro.cantidad + actual + valor >= 0) {
+      this.cambiosTemporales.set({ ...this.cambiosTemporales(), [id]: actual + valor });
     }
-
-    this.cambiosTemporales.set(mapaActual);
-  }
-
-  aplicarFiltroSucursal() {
-    this.sucursalFiltradaActual.set(this.sucursalControl.value ?? '');
-    this.paginaActual.set(1); 
   }
 
   solicitarConfirmacion(registro: any) {
-    const cantidad = this.cambiosTemporales()[registro.id] || 0;
-    if (cantidad === 0) return;
-
-    this.modalConfirmacion = {
-      visible: true,
-      registro: registro,
-      cantidad: cantidad
-    };
-  }
-
-  cerrarModal() {
-    this.modalConfirmacion = { visible: false, registro: null, cantidad: 0 };
+    this.modalConfirmacion = { registro, cantidad: this.cambiosTemporales()[registro.id] };
+    this.confirmarEliminarOpen.set(true);
   }
 
   procesarGuardadoStock() {
     const { registro, cantidad } = this.modalConfirmacion;
-    if (!registro || !cantidad) return;
-
-    const payload = {
-      productoId: Number(registro.productoId),
-      sucursalId: Number(registro.sucursalId),
-      cantidad: Number(registro.cantidad)
-    };
-
-    this.stockService.actualizarUnidades(payload).subscribe({
-      next: () => {
-        const mapaActual = { ...this.cambiosTemporales() };
-        delete mapaActual[registro.id];
-        this.cambiosTemporales.set(mapaActual);
-        this.cerrarModal();
-        this.lanzarAlerta("El stock se actualizó exitosamente.", "success");
-        this.cargarDatosIniciales(); 
-      },
-      error: () => {
-        this.cerrarModal();
-        this.lanzarAlerta("Error al procesar la actualización del stock.");
-      }
+    this.stockService.actualizarUnidades({
+      productoId: registro.productoId,
+      sucursalId: registro.sucursalId,
+      cantidad
+    }).subscribe(() => {
+      this.confirmarEliminarOpen.set(false);
+      const nuevosCambios = { ...this.cambiosTemporales() };
+      delete nuevosCambios[registro.id];
+      this.cambiosTemporales.set(nuevosCambios);
+      this.cargarDatosIniciales();
     });
   }
 
-  obtenerValorAbsoluto(valor: number | null): number {
-    return valor ? Math.abs(valor) : 0;
+  guardarNuevoStock() {
+    if (!this.modalNuevoStock.productoId) return;
+    const payload = { ...this.modalNuevoStock, sucursalId: Number(this.sucursalFiltradaActual()) };
+    this.stockService.funGuardar(payload).subscribe(() => {
+      this.isOpen.set(false);
+      this.cargarDatosIniciales();
+    });
   }
 }

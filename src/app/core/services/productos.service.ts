@@ -4,34 +4,24 @@ import { environment } from '../../../environments/environment';
 import { Producto } from '../interfaces/producto';
 import { Categoria } from '../interfaces/categoria';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ProductoService {
-  private readonly urlBase = environment.urlBase;
+  private readonly urlBase = `${environment.urlBase}/productos`;
   http = inject(HttpClient);
 
-  funListarProductos() {
-    return this.http.get<Producto[]>(`${this.urlBase}/productos`);
+  funListar() { 
+    return this.http.get<Producto[]>(this.urlBase); 
   }
 
-  funGuardarProducto(dato: Producto) {
-    return this.http.post(`${this.urlBase}/productos`, dato);
+  funGuardar(dato: Producto) { 
+    return this.http.post(this.urlBase, dato); 
+  }
+  
+  funEditar(dato: Producto, id: number) { 
+    return this.http.patch(`${this.urlBase}/${id}`, dato); 
   }
 
-  funEditarProducto(dato: Producto, id: number) {
-    return this.http.patch(`${this.urlBase}/productos/${id}`, dato);
-  }
-
-  funEliminarProducto(id: number) {
-    return this.http.delete(`${this.urlBase}/productos/${id}`);
-  }
-
-  funListarCategorias() {
-    return this.http.get<Categoria[]>(`${this.urlBase}/categorias`);
-  }
-
-  funGuardarCategoria(dato: Categoria) {
-    return this.http.post(`${this.urlBase}/categorias`, dato);
+  funEliminar(id: number) { 
+    return this.http.delete(`${this.urlBase}/${id}`); 
   }
 }

@@ -1,189 +1,126 @@
 <div class="p-6 max-w-4xl mx-auto">
+  <!-- Cabecera -->
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-[#013924] tracking-tight italic">GESTIÓN PRODUCTOS</h2>
-    <button (click)="isOpen = true" class="bg-[#013924] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-all">
+    <h2 class="text-2xl font-bold text-[#013924] tracking-tight uppercase italic">GESTIÓN DE PRODUCTOS</h2>
+    <button (click)="abrirModalProducto()"
+      class="bg-[#013924] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-all">
       + NUEVO PRODUCTO
     </button>
   </div>
 
-  <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+  <!-- LA TABLA (Recuperada) -->
+  <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 mb-10">
     <table class="w-full text-left">
-      <thead class="bg-[#013924] text-white text-xs uppercase tracking-widest text-center">
+      <thead class="bg-[#013924] text-white text-xs uppercase tracking-widest">
         <tr>
-          <th class="p-5 text-left">Producto</th>
-          <th class="p-5">Precio</th>
-          <th class="p-5">Categoría</th>
-          <th class="p-5">Acciones</th>
+          <th class="p-5 text-center">Producto</th>
+          <th class="p-5 text-center">Precio</th>
+          <th class="p-5 text-center">Categoría</th>
+          <th class="p-5 text-center">Acciones</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        @for (p of productosPaginados(); track p.id) {
-          <tr class="hover:bg-gray-50 transition-colors">
-            <td class="p-5 font-semibold text-gray-700">{{ p.nombre }}</td>
-            <td class="p-5 text-center font-bold text-[#013924]">{{ p.precio }} Bs</td>
-            <td class="p-5 text-center text-sm text-gray-400 italic">
-              {{ p.categoria ? p.categoria.nombre : (p.categoriaId ? 'Cargando...' : 'Sin categoría') }}
-            </td>
-            <td class="p-5 text-center">
-              <button (click)="mostrarProducto(p)" class="hover:scale-125 transition-transform px-2 text-orange-400">✏️</button>
-              <button (click)="eliminarProducto(p.id)" class="hover:scale-125 transition-transform px-2 text-gray-400">🗑️</button>
-            </td>
-          </tr>
+        @for (p of productos(); track p.id) {
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="p-5 font-semibold text-gray-700">{{ p.nombre }}</td>
+          <td class="p-5 font-semibold text-gray-700 text-center">{{ p.precio }} Bs</td>
+          <td class="p-5 font-semibold text-gray-400 text-center">{{ p.categoria?.nombre || 'General' }}</td>
+          <td class="p-5 text-center">
+            <div class="flex justify-center gap-3">
+              <button (click)="abrirModalProducto(p)" class="hover:scale-125 transition-transform">✏️</button>
+              <button (click)="prepararEliminacion(p.id, 'producto')" class="hover:scale-125 transition-transform">🗑️</button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="4" class="p-10 text-center text-gray-400 italic">No hay productos registrados para Baloo.</td>
+        </tr>
         }
       </tbody>
     </table>
-    
-    <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
-      <span class="text-[10px] font-bold text-gray-400 uppercase">Total: {{ productos().length }}</span>
-      <div class="flex items-center gap-4">
-        <button (click)="paginaActualProd.set(paginaActualProd() - 1)" [disabled]="paginaActualProd() === 1" class="text-[#013924] disabled:opacity-20 font-bold">◀</button>
-        <span class="text-xs font-bold text-[#013924]">Página {{ paginaActualProd() }} de {{ totalPaginasProd() }}</span>
-        <button (click)="paginaActualProd.set(paginaActualProd() + 1)" [disabled]="paginaActualProd() >= totalPaginasProd()" class="text-[#013924] disabled:opacity-20 font-bold">▶</button>
-      </div>
-    </div>
   </div>
 
-  @if (isOpen) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 overflow-y-auto max-h-[90vh]">
-        
-        <div class="flex justify-between items-center mb-8">
-          <h3 class="text-xl font-black text-[#013924] uppercase tracking-tight">
-            {{ idProductoSeleccionado ? 'Editar Producto' : 'Nuevo Producto' }}
-          </h3>
-          <button (click)="isOpen = false" class="text-gray-300 hover:text-red-500 text-2xl transition-colors">&times;</button>
-        </div>
-
-        <form [formGroup]="productoForm" (ngSubmit)="guardarProducto()" class="space-y-6">
-          <div class="relative">
-            <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Nombre</label>
-            <input formControlName="nombre" type="text" 
-                   [class.border-red-500]="productoForm.get('nombre')?.invalid && productoForm.get('nombre')?.touched" 
-                   class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all">
-            @if (productoForm.get('nombre')?.touched) {
-              @if (productoForm.get('nombre')?.errors?.['required']) {
-                <p class="text-[10px] text-red-500 font-bold mt-1">El nombre es requerido</p>
-              }
-              @if (productoForm.get('nombre')?.errors?.['pattern']) {
-                <p class="text-[10px] text-red-500 font-bold mt-1">No se permiten números ni símbolos</p>
-              }
-            }
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div class="relative">
-              <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Precio (Bs)</label>
-              <input formControlName="precio" type="number" step="0.1" 
-                     [class.border-red-500]="productoForm.get('precio')?.invalid && productoForm.get('precio')?.touched" 
-                     class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all">
-              @if (productoForm.get('precio')?.invalid && productoForm.get('precio')?.touched) {
-                <p class="text-[10px] text-red-500 font-bold mt-1">Mínimo 0.10 Bs</p>
-              }
-            </div>
-
-            <div class="relative">
-              <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Categoría</label>
-              <select formControlName="categoriaId" 
-                      [class.border-red-500]="productoForm.get('categoriaId')?.invalid && productoForm.get('categoriaId')?.touched" 
-                      class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none appearance-none bg-white">
-                <option value="">Elegir...</option>
-                @for (c of categorias(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
-              </select>
-              @if (productoForm.get('categoriaId')?.invalid && productoForm.get('categoriaId')?.touched) {
-                <p class="text-[10px] text-red-500 font-bold mt-1">Debe elegir una categoría</p>
-              }
-            </div>
-          </div>
-
-          <button type="submit" class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
-            GUARDAR PRODUCTO
-          </button>
-        </form>
-        
-        <div class="mt-10 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-          <h4 class="text-[10px] font-black text-gray-400 mb-6 uppercase text-center tracking-widest">Gestión de Categorías</h4>
-          
-          <form [formGroup]="categoriaForm" (ngSubmit)="guardarCategoria()" class="space-y-6">
-            <div class="relative">
-              <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Nombre Categoría</label>
-              <input formControlName="nombre" type="text" placeholder="Nueva Categoría" 
-                     [class.border-red-500]="categoriaForm.get('nombre')?.invalid && categoriaForm.get('nombre')?.touched" 
-                     class="w-full border-2 border-gray-100 p-3 rounded-xl text-sm shadow-sm outline-none focus:border-[#013924] bg-white transition-all">
-              @if (categoriaForm.get('nombre')?.touched) {
-                @if (categoriaForm.get('nombre')?.errors?.['required']) {
-                  <p class="text-[10px] text-red-500 font-bold mt-1 ml-2">El nombre es requerido</p>
-                }
-                @if (categoriaForm.get('nombre')?.errors?.['pattern']) {
-                  <p class="text-[10px] text-red-500 font-bold mt-1 ml-2">Solo se permiten letras</p>
-                }
-              }
-            </div>
-
-            <div class="relative">
-              <label class="text-[10px] font-black text-gray-400 uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Descripción</label>
-              <textarea formControlName="descripcion" placeholder="Descripción breve..." 
-                        class="w-full border-2 border-gray-100 p-3 rounded-xl text-sm shadow-sm outline-none focus:border-[#013924] bg-white transition-all" 
-                        rows="2"></textarea>
-            </div>
-
-            <button type="submit" class="w-full border-2 border-[#013924] text-[#013924] py-3 rounded-xl font-bold text-xs hover:bg-[#013924] hover:text-white transition-all uppercase tracking-widest bg-white">
-              {{ idCategoriaSeleccionada ? 'Actualizar Categoría' : 'Añadir Categoría' }}
-            </button>
-          </form>
-
-          <div class="mt-6 space-y-2">
-            @for (cat of categoriasPaginadas(); track cat.id) {
-              <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                <span class="text-xs font-bold text-gray-600">{{ cat.nombre }}</span>
-                <div class="flex gap-2">
-                  <button (click)="mostrarCategoria(cat)" class="text-orange-400 text-xs hover:scale-110 transition-transform">✏️</button>
-                  <button (click)="eliminarCategoria(cat.id)" class="text-gray-300 text-xs hover:scale-110 transition-transform">🗑️</button>
-                </div>
-              </div>
-            }
-            
-            <div class="flex justify-center items-center gap-4 mt-4">
-              <button (click)="paginaActualCat.set(paginaActualCat() - 1)" [disabled]="paginaActualCat() === 1" class="text-[#013924] text-[10px] font-bold disabled:opacity-20">ANT.</button>
-              <span class="text-[10px] text-gray-400 font-bold uppercase">{{ paginaActualCat() }} / {{ totalPaginasCat() }}</span>
-              <button (click)="paginaActualCat.set(paginaActualCat() + 1)" [disabled]="paginaActualCat() >= totalPaginasCat()" class="text-[#013924] text-[10px] font-bold disabled:opacity-20">SIG.</button>
-            </div>
-          </div>
-        </div>
-
-        <button (click)="isOpen = false" class="w-full mt-8 text-[10px] text-gray-300 font-black uppercase tracking-widest text-center hover:text-red-500 transition-colors">Cerrar Ventana</button>
+  <!-- Modal Principal (Producto + Categorías) -->
+  @if (isOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 pb-4 overflow-y-auto max-h-[90vh] border border-gray-100">
+      
+      <div class="flex justify-between items-center mb-8">
+        <h3 class="text-xl font-black text-[#013924] uppercase">{{ nuevoProducto.id ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO' }}</h3>
+        <button (click)="isOpen.set(false)" class="text-gray-300 hover:text-red-500 text-3xl transition-colors">&times;</button>
       </div>
-    </div>
-  }
 
-  @if (confirmModal().show) {
-    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 text-center transform transition-all animate-in fade-in zoom-in-95 duration-200">
+      <!-- Formulario Producto -->
+      <div class="space-y-6 mb-8">
+        <div class="relative">
+          <label class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Nombre</label>
+          <input [(ngModel)]="nuevoProducto.nombre" type="text" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none shadow-sm">
+        </div>
         
-        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-orange-50 mb-4">
-          <span class="text-orange-500 text-3xl font-bold">⚠️</span>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="relative">
+            <label class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Precio (Bs)</label>
+            <input [(ngModel)]="nuevoProducto.precio" type="number" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none shadow-sm">
+          </div>
+          <div class="relative">
+            <label class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Categoría</label>
+            <select [(ngModel)]="nuevoProducto.categoriaId" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none bg-transparent shadow-sm">
+              <option [value]="0">Elegir...</option>
+              @for (cat of categorias(); track cat.id) { <option [value]="cat.id">{{ cat.nombre }}</option> }
+            </select>
+          </div>
+        </div>
+        
+        <button (click)="guardarProducto()" [disabled]="!esFormularioValido()"
+          [class]="esFormularioValido() ? 'w-full bg-[#013924] text-white py-4 rounded-2xl font-bold uppercase tracking-widest shadow-xl' : 'w-full bg-[#d1d5db] text-[#9ca3af] py-4 rounded-2xl font-bold uppercase tracking-widest cursor-not-allowed'">
+          {{ nuevoProducto.id ? 'ACTUALIZAR PRODUCTO' : 'GUARDAR PRODUCTO' }}
+        </button>
+      </div>
+
+      <!-- Gestión de Categorías Inferior -->
+      <div class="bg-gray-50/50 rounded-[2rem] p-6 border border-gray-100 shadow-inner">
+        <p class="text-xs font-black text-gray-400 uppercase text-center mb-6 tracking-widest">CATEGORÍAS</p>
+        <div class="space-y-4 mb-6">
+          <input [(ngModel)]="nuevaCategoria.nombre" type="text" placeholder="Nueva Categoría" class="w-full border-2 border-gray-50 focus:border-[#013924] p-3 rounded-2xl outline-none text-sm shadow-sm">
+          <button (click)="guardarCategoria()" class="w-full bg-[#013924] text-white py-3 rounded-2xl font-bold uppercase tracking-widest text-[10px]">
+            {{ nuevaCategoria.id ? 'ACTUALIZAR' : 'AÑADIR' }}
+          </button>
         </div>
 
-        <h3 class="text-lg font-bold text-[#013924] mb-2">{{ confirmModal().titulo }}</h3>
-        <p class="text-xs text-gray-500 mb-6 leading-relaxed">{{ confirmModal().mensaje }}</p>
-
-        <div class="flex gap-3 justify-center">
-          @if (!confirmModal().esAlerta) {
-            <button (click)="cerrarConfirmModal()" 
-                    class="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-              No, Cancelar
-            </button>
-            <button (click)="ejecutarAccionConfirm()" 
-                    class="px-4 py-2 text-xs font-bold text-white uppercase tracking-wider bg-red-500 rounded-xl shadow-md shadow-red-200 hover:bg-red-600 transition-colors">
-              Sí, Eliminar
-            </button>
-          } @else {
-            <button (click)="cerrarConfirmModal()" 
-                    class="w-full px-4 py-2 text-xs font-bold text-white uppercase tracking-wider bg-[#013924] rounded-xl hover:opacity-90 transition-opacity">
-              Aceptar
-            </button>
+        <div class="space-y-2 max-h-40 overflow-y-auto">
+          @for (c of categorias(); track c.id) {
+            <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-gray-50">
+              <span class="text-xs font-bold text-gray-600">{{ c.nombre }}</span>
+              <div class="flex gap-2">
+                <button (click)="nuevaCategoria = {...c}" class="text-orange-400 text-xs">✏️</button>
+                <button (click)="prepararEliminacion(c.id, 'categoria')" class="text-gray-300 hover:text-red-400 text-xs">🗑️</button>
+              </div>
+            </div>
           }
         </div>
       </div>
     </div>
+  </div>
+  }
+
+  <!-- MODAL DE CONFIRMACIÓN (DISEÑO image_bd4c55.png) -->
+  @if (confirmarEliminarOpen()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-[320px] p-10 text-center border border-gray-100 animate-in fade-in zoom-in duration-200">
+      <div class="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <span class="text-orange-400 text-4xl">⚠️</span>
+      </div>
+      <h4 class="text-[#013924] text-xl font-bold mb-3">¿Estás seguro?</h4>
+      <p class="text-gray-400 text-xs leading-relaxed mb-10 px-4">
+        @if (tipoAEliminar() === 'producto') { Esta acción eliminará el <strong>producto</strong> permanentemente. }
+        @else { ¿Estás seguro de eliminar esta <strong>categoría</strong>? }
+      </p>
+      <div class="flex gap-3">
+        <button (click)="confirmarEliminarOpen.set(false)" class="flex-1 bg-white border border-gray-100 text-gray-400 py-3 rounded-2xl font-bold uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-colors">NO, CANCELAR</button>
+        <button (click)="ejecutarEliminacion()" class="flex-1 bg-[#ef4444] text-white py-3 rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-red-200 hover:bg-red-600 transition-all">SÍ, ELIMINAR</button>
+      </div>
+    </div>
+  </div>
   }
 </div>
