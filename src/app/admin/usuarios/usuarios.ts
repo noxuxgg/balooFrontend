@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
   styleUrl: './usuarios.scss',
 })
 export class Usuarios {
-  userService = inject(UsersService);
+  userService = inject(UsersService); 
   rolesService = inject(RolesService);
   usuarios = signal<any>([]);
   usuarioSolo = signal<any>([]);
