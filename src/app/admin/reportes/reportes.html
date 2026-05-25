@@ -1,1 +1,120 @@
-<p>reportes works!</p>
+<div class="p-6 bg-gray-50 min-h-screen text-gray-800">
+
+    <div [formGroup]="filtrosForm"
+        class="mb-6 flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+
+        <div class="flex flex-col min-w-[200px]">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Sucursal</label>
+            <select formControlName="sucursal"
+                class="bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg text-sm focus:outline-none focus:border-gray-400 cursor-pointer">
+                <option value="todas">Todas las Sucursales</option>
+                @for (sucursal of sucursales(); track $index) {
+                <option [value]="sucursal.id">{{ sucursal.nombre }}</option>
+                }
+            </select>
+        </div> 
+
+        <div class="flex flex-col">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Desde</label>
+            <input type="date" formControlName="fechaInicio"
+                class="bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg text-sm focus:outline-none focus:border-gray-400 cursor-pointer" />
+        </div>
+
+        <div class="flex flex-col">
+            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Hasta</label>
+            <input type="date" formControlName="fechaFin"
+                class="bg-gray-50 border border-gray-200 text-gray-700 py-1.5 px-3 rounded-lg text-sm focus:outline-none focus:border-gray-400 cursor-pointer" />
+        </div>
+
+        <div class="flex flex-col">
+            <label class="text-xs font-semibold select-none mb-1">&nbsp;</label>
+            <button type="button" (click)="calcularReporte()"
+                class="bg-[#013924] hover:bg-[#0E432F] text-white font-medium text-sm py-1.5 px-4 rounded-lg transition-colors shadow-sm focus:outline-none h-[38px]">
+                Aplicar
+            </button>
+        </div>
+
+    </div>
+
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        <p class="text-sm text-gray-500 mt-1">¡Bienvenido de nuevo! Ventas en la Sucursal</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                </div>
+                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Venta Mensual</p>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ ventaMensual() | number:'1.0-2' }} Bs.</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2">
+                        </path>
+                    </svg>
+                </div>
+                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Ventas Hoy</p>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ ventasHoy() | number:'1.0-2' }} Bs.</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                    </svg>
+                </div>
+                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Pedidos</p>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 mt-2">{{ totalPedidos() }}</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+            <div>
+                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77 0-2 0-2 0">
+                        </path>
+                    </svg>
+                </div>
+                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Alertas de Stock</p>
+            </div>
+            <p class="text-2xl font-bold text-red-600 mt-2">{{ alertasStock() }}</p>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">Tendencia de Ventas</h3>
+            <div class="relative w-full h-64">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">Comparativa de Ventas</h3>
+            <div class="relative w-full h-64">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+</div>
