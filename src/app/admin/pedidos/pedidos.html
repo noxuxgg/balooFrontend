@@ -127,9 +127,7 @@
               <!-- Fecha Pedido -->
               <div class="relative">
                 <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Fecha Pedido</label>
-                <input formControlName="fechaPedido" type="date"
-                  [class.border-red-500]="pedidoForm.get('fechaPedido')?.invalid && pedidoForm.get('fechaPedido')?.touched"
-                  class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all bg-white">
+                <input formControlName="fechaPedido" type="date" readonly class="w-full border-2 border-gray-100 bg-gray-100 p-3 rounded-xl outline-none cursor-not-allowed font-bold text-[#013924]">
                 @if (pedidoForm.get('fechaPedido')?.invalid && pedidoForm.get('fechaPedido')?.touched) {
                   <p class="text-[10px] text-red-500 font-bold mt-1">Requerido</p>
                 }
@@ -230,14 +228,14 @@
           @if (idPedidoSeleccionado) {
             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
               <span class="text-[10px] font-black text-[#013924] uppercase">Estado del Pedido</span>
-              <label class="flex items-center gap-3 cursor-pointer">
+              <label class="flex items-center gap-3 cursor-pointer select-none">
                 <span class="text-[10px] font-bold text-gray-400 uppercase">
                   {{ pedidoForm.get('estado')?.value ? 'Activo' : 'Inactivo' }}
                 </span>
+                <input type="checkbox" formControlName="estado" class="hidden">
                 <div [class]="pedidoForm.get('estado')?.value
-                  ? 'w-10 h-5 bg-[#013924] rounded-full cursor-pointer transition-all relative'
-                  : 'w-10 h-5 bg-gray-200 rounded-full cursor-pointer transition-all relative'"
-                  (click)="pedidoForm.get('estado')?.setValue(!pedidoForm.get('estado')?.value)">
+                  ? 'w-10 h-5 bg-[#013924] rounded-full transition-all relative'
+                  : 'w-10 h-5 bg-gray-200 rounded-full transition-all relative'">
                   <div [class]="pedidoForm.get('estado')?.value
                     ? 'absolute top-0.5 left-5 w-4 h-4 bg-white rounded-full shadow transition-all'
                     : 'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-all'">

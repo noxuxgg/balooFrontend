@@ -13,6 +13,7 @@ export class Clientes {
 
   soloLetras = /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$/;
   soloNumeros = /^[0-9]+$/;
+  alfaNumericoMax2 = /^[0-9A-ZÑa-zñ]{1,2}$/;
 
   clienteService = inject(ClienteService);
 
@@ -30,6 +31,15 @@ export class Clientes {
 
   // Formulario Cliente
   clienteForm = new FormGroup({
+    carnet: new FormControl<number | null>(null, [
+      Validators.required,
+      Validators.min(10000),
+      Validators.max(9999999999),
+    ]),
+    complemento: new FormControl('', [
+      Validators.maxLength(2),
+      Validators.pattern(this.alfaNumericoMax2),
+    ]),
     nombre: new FormControl('', [
       Validators.required,
       Validators.minLength(3),
@@ -81,6 +91,8 @@ export class Clientes {
     const formValues = this.clienteForm.value;
 
     const datosEnvio = {
+      carnet: Number(formValues.carnet),
+      complemento: formValues.complemento ?? '',
       nombre: formValues.nombre ?? '',
       apellido: formValues.apellido ?? '',
       telefono: formValues.telefono ?? '',
@@ -133,6 +145,8 @@ export class Clientes {
   mostrarCliente(datos: any) {
     this.idClienteSeleccionado = datos.id;
     this.clienteForm.patchValue({
+      carnet: datos.carnet,
+      complemento: datos.complemento,
       nombre: datos.nombre,
       apellido: datos.apellido,
       telefono: datos.telefono,

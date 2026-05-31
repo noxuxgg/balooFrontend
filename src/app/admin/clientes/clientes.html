@@ -1,5 +1,4 @@
 <div class="p-6 max-w-4xl mx-auto">
-  <!-- Encabezado -->
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-bold text-[#013924] tracking-tight italic">GESTIÓN CLIENTES</h2>
     <button (click)="abrirNuevo()" class="bg-[#013924] text-white px-8 py-2 rounded-lg font-bold shadow-md hover:opacity-90 transition-all">
@@ -7,11 +6,11 @@
     </button>
   </div>
 
-  <!-- Tabla de Clientes -->
   <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
     <table class="w-full text-left">
       <thead class="bg-[#013924] text-white text-xs uppercase tracking-widest text-center">
         <tr>
+          <th class="p-5 text-left">Carnet</th>
           <th class="p-5 text-left">Nombre</th>
           <th class="p-5">Apellido</th>
           <th class="p-5">Teléfono</th>
@@ -22,6 +21,9 @@
       <tbody class="divide-y divide-gray-100">
         @for (c of clientesPaginados(); track c.id) {
           <tr class="hover:bg-gray-50 transition-colors">
+            <td class="p-5 font-bold text-gray-700">
+              {{ c.carnet }}{{ c.complemento ? '-' + c.complemento : '' }}
+            </td>
             <td class="p-5 font-semibold text-gray-700">{{ c.nombre }}</td>
             <td class="p-5 text-center text-gray-600">{{ c.apellido }}</td>
             <td class="p-5 text-center font-bold text-[#013924]">{{ c.telefono }}</td>
@@ -41,7 +43,6 @@
       </tbody>
     </table>
 
-    <!-- Paginador -->
     <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
       <span class="text-[10px] font-bold text-gray-400 uppercase">Total: {{ clientes().length }}</span>
       <div class="flex items-center gap-4">
@@ -56,11 +57,9 @@
     </div>
   </div>
 
-  <!-- Modal Crear/Editar -->
   @if (isOpen) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-[#013924]/20 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 overflow-y-auto max-h-[90vh]">
-        <!-- Cabecera Modal -->
         <div class="flex justify-between items-center mb-8">
           <h3 class="text-xl font-black text-[#013924] uppercase tracking-tight">
             {{ idClienteSeleccionado ? 'Editar Cliente' : 'Nuevo Cliente' }}
@@ -69,7 +68,34 @@
         </div>
 
         <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()" class="space-y-6">
-          <!-- Nombre -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="relative col-span-2">
+              <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Carnet</label>
+              <input formControlName="carnet" type="number"
+                [class.border-red-500]="clienteForm.get('carnet')?.invalid && clienteForm.get('carnet')?.touched"
+                class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+              @if (clienteForm.get('carnet')?.touched) {
+                @if (clienteForm.get('carnet')?.errors?.['required']) {
+                  <p class="text-[10px] text-red-500 font-bold mt-1">El carnet es requerido</p>
+                }
+                @if (clienteForm.get('carnet')?.errors?.['min'] || clienteForm.get('carnet')?.errors?.['max']) {
+                  <p class="text-[10px] text-red-500 font-bold mt-1">Carnet inválido</p>
+                }
+              }
+            </div>
+
+            <div class="relative">
+              <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Comp.</label>
+              <input formControlName="complemento" type="text"
+                [class.border-red-500]="clienteForm.get('complemento')?.invalid && clienteForm.get('complemento')?.touched"
+                class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all uppercase">
+              <span class="text-[10px] text-gray-400 font-medium block mt-1 ml-1">Opcional</span>
+              @if (clienteForm.get('complemento')?.touched && clienteForm.get('complemento')?.invalid) {
+                <p class="text-[10px] text-red-500 font-bold mt-1">Formato inválido</p>
+              }
+            </div>
+          </div>
+
           <div class="relative">
             <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Nombre</label>
             <input formControlName="nombre" type="text"
@@ -88,7 +114,6 @@
             }
           </div>
 
-          <!-- Apellido -->
           <div class="relative">
             <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Apellido</label>
             <input formControlName="apellido" type="text"
@@ -107,7 +132,6 @@
             }
           </div>
 
-          <!-- Teléfono -->
           <div class="relative">
             <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-white px-1 z-10">Teléfono</label>
             <input formControlName="telefono" type="text" maxlength="8"
@@ -126,39 +150,32 @@
             }
           </div>
 
-          <!-- Estado (solo visible al editar) -->
           @if (idClienteSeleccionado) {
             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
               <span class="text-[10px] font-black text-[#013924] uppercase">Estado del Cliente</span>
-              <label class="flex items-center gap-3 cursor-pointer">
+              <label class="flex items-center gap-3 cursor-pointer select-none">
                 <span class="text-[10px] font-bold text-gray-400 uppercase">
                   {{ clienteForm.get('estado')?.value ? 'Activo' : 'Inactivo' }}
                 </span>
-                <div class="relative">
-                  <input type="checkbox" formControlName="estado" class="sr-only peer">
-                  <div
-                    (click)="clienteForm.get('estado')?.setValue(!clienteForm.get('estado')?.value)"
-                    [class]="clienteForm.get('estado')?.value
-                      ? 'w-10 h-5 bg-[#013924] rounded-full cursor-pointer transition-all'
-                      : 'w-10 h-5 bg-gray-200 rounded-full cursor-pointer transition-all'">
-                    <div [class]="clienteForm.get('estado')?.value
-                      ? 'absolute top-0.5 left-5 w-4 h-4 bg-white rounded-full shadow transition-all'
-                      : 'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-all'">
-                    </div>
+                <input type="checkbox" formControlName="estado" class="hidden">
+                <div [class]="clienteForm.get('estado')?.value
+                  ? 'w-10 h-5 bg-[#013924] rounded-full transition-all relative'
+                  : 'w-10 h-5 bg-gray-200 rounded-full transition-all relative'">
+                  <div [class]="clienteForm.get('estado')?.value
+                    ? 'absolute top-0.5 left-5 w-4 h-4 bg-white rounded-full shadow transition-all'
+                    : 'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-all'">
                   </div>
                 </div>
               </label>
             </div>
           }
 
-          <!-- Botón Guardar -->
           <button type="submit"
             class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
             {{ idClienteSeleccionado ? 'ACTUALIZAR CLIENTE' : 'GUARDAR CLIENTE' }}
           </button>
         </form>
 
-        <!-- Cerrar -->
         <button (click)="isOpen = false"
           class="w-full mt-8 text-[10px] text-gray-300 font-black uppercase tracking-widest text-center hover:text-red-500 transition-colors">
           Cerrar Ventana
@@ -167,7 +184,6 @@
     </div>
   }
 
-  <!-- Modal Confirmar Eliminación -->
   @if (confirmarEliminarOpen()) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
       <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 border border-gray-100 text-center">
