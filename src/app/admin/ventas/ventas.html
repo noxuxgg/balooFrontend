@@ -153,12 +153,23 @@
             + Agregar Producto
           </button>
 
+          <!-- 👇 Lista detalles con botones + y - -->
           @if (detalles().length > 0) {
             <div class="mt-4 space-y-2">
               @for (d of detalles(); track $index) {
                 <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                  <span class="text-xs font-bold text-gray-600">{{ d.nombreProducto }}</span>
-                  <span class="text-xs text-gray-400">× {{ d.cantidad }} — {{ d.cantidad * d.precioUnitario | number:'1.2-2' }} Bs</span>
+                  <span class="text-xs font-bold text-gray-600 flex-1">{{ d.nombreProducto }}</span>
+
+                  <!-- Controles + y - -->
+                  <div class="flex items-center gap-2 mx-3">
+                    <button (click)="decrementarCantidad($index)"
+                      class="w-6 h-6 rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-500 text-xs font-black transition-all flex items-center justify-center">−</button>
+                    <span class="text-xs font-bold text-[#013924] w-6 text-center">{{ d.cantidad }}</span>
+                    <button (click)="incrementarCantidad($index)"
+                      class="w-6 h-6 rounded-full bg-gray-100 hover:bg-green-100 hover:text-green-600 text-xs font-black transition-all flex items-center justify-center">+</button>
+                  </div>
+
+                  <span class="text-xs text-gray-400 mr-3">{{ d.cantidad * d.precioUnitario | number:'1.2-2' }} Bs</span>
                   <button (click)="quitarDetalle($index)" class="text-gray-300 text-xs hover:scale-110 transition-transform">🗑️</button>
                 </div>
               }
@@ -177,6 +188,7 @@
             <div class="relative">
               <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Método</label>
               <select [formControl]="pagoForm.controls.metodo"
+                      (change)="onMetodoChange()"
                       class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none appearance-none bg-white text-sm">
                 <option value="efectivo">Efectivo</option>
                 <option value="QR">QR</option>
