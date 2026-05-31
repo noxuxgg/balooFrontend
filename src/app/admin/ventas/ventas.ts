@@ -108,6 +108,25 @@ export class Ventas {
       this.pagoForm.patchValue({ monto: nuevoTotal > 0 ? nuevoTotal : null });
     });
   }
+  incrementarCantidad(index: number) {
+    this.detalles.update(d => d.map((item, i) =>
+      i === index ? { ...item, cantidad: item.cantidad + 1 } : item
+    ));
+    this.pagoForm.patchValue({ monto: this.totalCalculado() });
+  }
+
+  decrementarCantidad(index: number) {
+    const detalle = this.detalles()[index];
+    if (detalle.cantidad <= 1) {
+      // Si llega a 1 y baja más, elimina el producto
+      this.quitarDetalle(index);
+      return;
+    }
+    this.detalles.update(d => d.map((item, i) =>
+      i === index ? { ...item, cantidad: item.cantidad - 1 } : item
+    ));
+    this.pagoForm.patchValue({ monto: this.totalCalculado() });
+  }
 
   agregarPago() {
     if (this.pagoForm.invalid) {
@@ -115,10 +134,17 @@ export class Ventas {
       return;
     }
     const val = this.pagoForm.value;
-    this.pagos.update(p => [...p, { metodo: val.metodo, monto: Number(val.monto) }]);
-    this.pagoForm.reset({ metodo: 'efectivo' });
+    this.pagos.set([{ metodo: val.metodo, monto: Number(val.monto) }]);
+   
+    this.pagoForm.reset({ metodo: 'efectivo', monto: this.totalCalculado() });
   }
 
+  onMetodoChange() {
+    const nuevoTotal = this.totalCalculado();
+    if (nuevoTotal > 0) {
+      this.pagoForm.patchValue({ monto: nuevoTotal });
+    }
+  }
   quitarPago(index: number) {
     this.pagos.update(p => p.filter((_, i) => i !== index));
   }
@@ -190,6 +216,7 @@ export class Ventas {
         error: (err: any) => {  // corregido el tipo any
           const texto = err.error?.message || 'Error al guardar la venta.';
           this.errorServidor.set(texto);
+          this.pagos.set([]);
           setTimeout(() => this.errorServidor.set(''), 10000);
         }
       });
@@ -233,4 +260,7 @@ export class Ventas {
     this.idVentaSeleccionada = 0;
     this.errorServidor.set('');
   }
+
+
+
 }
