@@ -212,8 +212,24 @@ listarTodo() {
   }
 
   abrirNuevo() {
-    this.pedidoForm.reset({ estado: true });
     this.idPedidoSeleccionado = '';
     this.isOpen = true;
+    
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    this.pedidoForm.reset({
+      fechaPedido: hoy,
+      estado: true,
+      clienteId: null,
+      sucursalId: null,
+      cantidadPersonas: null,
+      lugarEntrega: '',
+      total: null,
+      adelanto: null,
+      saldo: null,
+      observaciones: '',
+      horaEntrega: '',
+      fechaEntrega: ''
+    });
   }
 }
