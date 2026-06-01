@@ -22,7 +22,12 @@
         <tr class="hover:bg-gray-50 transition-colors">
           <td class="p-5 font-semibold text-gray-700">{{ p.nombre }}</td>
           <td class="p-5 font-semibold text-gray-700 text-center">{{ p.precio }} Bs</td>
-          <td class="p-5 font-semibold text-gray-400 text-center">{{ p.categoria?.nombre || 'General' }}</td>
+          <td class="p-5 font-semibold text-gray-400 text-center">
+            {{ p.categoria?.nombre || 'General' }}
+            @if (p.categoria?.descripcion) {
+              <span class="block text-[10px] font-normal text-gray-400 italic mt-0.5">({{ p.categoria.descripcion }})</span>
+            }
+          </td>
           <td class="p-5 text-center">
             <div class="flex justify-center gap-3">
               <button (click)="abrirModalProducto(p)" class="hover:scale-125 transition-transform">✏️</button>
@@ -48,24 +53,36 @@
         <button (click)="isOpen.set(false)" class="text-gray-300 hover:text-red-500 text-3xl transition-colors">&times;</button>
       </div>
 
-      
       <div class="space-y-6 mb-8">
         <div class="relative">
           <label class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Nombre</label>
-          <input [(ngModel)]="nuevoProducto.nombre" type="text" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none shadow-sm">
+          <input [(ngModel)]="nuevoProducto.nombre" #prodNombre="ngModel" type="text" maxlength="50" required [class.border-red-500]="prodNombre.touched && (nuevoProducto.nombre.length < 3 || nuevoProducto.nombre.length > 50)" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none shadow-sm">
+          @if (prodNombre.touched && nuevoProducto.nombre.length === 0) {
+            <span class="block text-left text-red-500 font-bold text-[10px] mt-1 px-2">El nombre es requerido</span>
+          } @else if (prodNombre.touched && nuevoProducto.nombre.length < 3) {
+            <span class="block text-left text-red-500 font-bold text-[10px] mt-1 px-2">El nombre debe tener al menos 3 caracteres</span>
+          }
         </div>
         
         <div class="grid grid-cols-2 gap-4">
           <div class="relative">
             <label class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Precio (Bs)</label>
-            <input [(ngModel)]="nuevoProducto.precio" type="number" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none shadow-sm">
+            <input [(ngModel)]="nuevoProducto.precio" #prodPrecio="ngModel" type="number" min="0.1" max="10000" (input)="nuevoProducto.precio = (nuevoProducto.precio > 10000 ? 10000 : nuevoProducto.precio)" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none shadow-sm transition-colors">
+            @if (prodPrecio.touched && (nuevoProducto.precio === null || nuevoProducto.precio === undefined)) {
+              <span class="block text-left text-red-500 font-bold text-[10px] mt-1 px-2">El precio es requerido</span>
+            } @else if (prodPrecio.touched && nuevoProducto.precio <= 0) {
+              <span class="block text-left text-red-500 font-bold text-[10px] mt-1 px-2">Debe ser mayor a 0 Bs</span>
+            }
           </div>
           <div class="relative">
             <label class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Categoría</label>
-            <select [(ngModel)]="nuevoProducto.categoriaId" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none bg-transparent shadow-sm">
+            <select [(ngModel)]="nuevoProducto.categoriaId" #prodCat="ngModel" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none bg-transparent shadow-sm">
               <option [value]="0">Elegir...</option>
               @for (cat of categorias(); track cat.id) { <option [value]="cat.id">{{ cat.nombre }}</option> }
             </select>
+            @if (prodCat.touched && nuevoProducto.categoriaId === 0) {
+                <span class="block text-left text-red-500 font-bold text-[10px] mt-1 px-2">Debe elegir una categoría</span>
+            }
           </div>
         </div>
         
@@ -75,11 +92,24 @@
         </button>
       </div>
 
-      
       <div class="bg-gray-50/50 rounded-[2rem] p-6 border border-gray-100 shadow-inner">
         <p class="text-xs font-black text-gray-400 uppercase text-center mb-6 tracking-widest">CATEGORÍAS</p>
         <div class="space-y-4 mb-6">
-          <input [(ngModel)]="nuevaCategoria.nombre" type="text" placeholder="Nueva Categoría" class="w-full border-2 border-gray-50 focus:border-[#013924] p-3 rounded-2xl outline-none text-sm shadow-sm">
+          <div class="relative">
+            <label class="text-[9px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Nombre Categoría</label>
+            <input [(ngModel)]="nuevaCategoria.nombre" #catNombre="ngModel" type="text" maxlength="30" placeholder="Ej. Tortas" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none text-sm shadow-sm">
+            @if (catNombre.touched && nuevaCategoria.nombre.length === 0) {
+              <span class="block text-left text-red-500 font-bold text-[10px] mt-1 px-2">El nombre es requerido</span>
+            } @else if (catNombre.touched && nuevaCategoria.nombre.length < 3) {
+              <span class="block text-left text-red-500 font-bold text-[10px] mt-1 px-2">Debe tener al menos 3 caracteres</span>
+            }
+          </div>
+          
+          <div class="relative">
+            <label class="text-[9px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-4 bg-white px-1">Descripción</label>
+            <input [(ngModel)]="nuevaCategoria.descripcion" type="text" maxlength="150" placeholder="Opcional Ej. Tortas para eventos especiales" class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-2xl outline-none text-sm shadow-sm">
+          </div>
+
           <button (click)="guardarCategoria()" class="w-full bg-[#013924] text-white py-3 rounded-2xl font-bold uppercase tracking-widest text-[10px]">
             {{ nuevaCategoria.id ? 'ACTUALIZAR' : 'AÑADIR' }}
           </button>
@@ -88,7 +118,12 @@
         <div class="space-y-2 max-h-40 overflow-y-auto">
           @for (c of categorias(); track c.id) {
             <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-gray-50">
-              <span class="text-xs font-bold text-gray-600">{{ c.nombre }}</span>
+              <div class="flex flex-col">
+                <span class="text-xs font-bold text-gray-600">{{ c.nombre }}</span>
+                @if (c.descripcion) {
+                  <span class="text-[10px] text-gray-400 line-clamp-1 max-w-[180px]">{{ c.descripcion }}</span>
+                }
+              </div>
               <div class="flex gap-2">
                 <button (click)="nuevaCategoria = {...c}" class="text-orange-400 text-xs">✏️</button>
                 <button (click)="prepararEliminacion(c.id, 'categoria')" class="text-gray-300 hover:text-red-400 text-xs">🗑️</button>
