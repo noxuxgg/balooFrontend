@@ -105,27 +105,44 @@ export class Ventas {
     this.detalles.update(d => d.filter((_, i) => i !== index));
     setTimeout(() => {
       const nuevoTotal = this.totalCalculado();
-      this.pagoForm.patchValue({ monto: nuevoTotal > 0 ? nuevoTotal : null });
+      if (nuevoTotal > 0) {
+        this.pagoForm.patchValue({ monto: nuevoTotal });
+     
+        if (this.pagos().length > 0) {
+          this.pagos.update(p => p.map(pago => ({ ...pago, monto: nuevoTotal })));
+        }
+      } else {
+        this.pagos.set([]);
+        this.pagoForm.patchValue({ monto: null });
+      }
     });
   }
+
   incrementarCantidad(index: number) {
     this.detalles.update(d => d.map((item, i) =>
       i === index ? { ...item, cantidad: item.cantidad + 1 } : item
     ));
-    this.pagoForm.patchValue({ monto: this.totalCalculado() });
+    const nuevoTotal = this.totalCalculado();
+    this.pagoForm.patchValue({ monto: nuevoTotal });
+    if (this.pagos().length > 0) {
+      this.pagos.update(p => p.map(pago => ({ ...pago, monto: nuevoTotal })));
+    }
   }
 
   decrementarCantidad(index: number) {
     const detalle = this.detalles()[index];
     if (detalle.cantidad <= 1) {
-      // Si llega a 1 y baja más, elimina el producto
       this.quitarDetalle(index);
       return;
     }
     this.detalles.update(d => d.map((item, i) =>
       i === index ? { ...item, cantidad: item.cantidad - 1 } : item
     ));
-    this.pagoForm.patchValue({ monto: this.totalCalculado() });
+    const nuevoTotal = this.totalCalculado();
+    this.pagoForm.patchValue({ monto: nuevoTotal });
+    if (this.pagos().length > 0) {
+      this.pagos.update(p => p.map(pago => ({ ...pago, monto: nuevoTotal })));
+    }
   }
 
   agregarPago() {
