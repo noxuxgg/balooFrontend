@@ -1,7 +1,7 @@
 <div class="p-6 bg-white rounded-lg shadow relative">
   
   @if (errorServidor()) {
-    <div class="fixed top-6 right-6 z-[100] flex items-center p-4 rounded-lg shadow-xl transition-all border animate-bounce"
+    <div class="fixed top-6 right-6 z-[100] flex items-center p-4 rounded-lg shadow-xl transition-all border"
          [class]="tipoAlerta() === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'">
       <div class="flex items-center gap-2">
         @if (tipoAlerta() === 'error') {
@@ -30,8 +30,8 @@
         APLICAR
       </button>
 
-      <button (click)="abrirModalNuevo()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow-md flex items-center gap-1">
-        <span class="text-base font-bold">+</span> Añadir Producto
+      <button (click)="abrirModalNuevo()" class="bg-emerald-800 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded text-sm transition-colors shadow-md flex items-center gap-1">
+        <span class="text-base font-bold">+</span> AÑADIR PRODUCTO
       </button>
     </div>
 
@@ -43,7 +43,7 @@
           (focus)="mostrarSugerenciasPrincipal.set(true)"
           (keyup.enter)="ejecutarBusqueda()"
           placeholder="Escribe un producto..." 
-          class="border border-gray-300 rounded-l px-4 py-2 pl-4 pr-8 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-emerald-700"
+          class="border border-gray-300 rounded-l px-4 py-2 pl-4 pr-8 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-emerald-800"
         >
         @if (buscadorControl.value) {
           <button (click)="buscadorControl.setValue(''); ejecutarBusqueda()" 
@@ -61,7 +61,7 @@
           </div>
         }
       </div>
-      <button (click)="ejecutarBusqueda()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2 rounded-r text-sm shadow-md">
+      <button (click)="ejecutarBusqueda()" class="bg-emerald-800 hover:bg-emerald-800 text-white font-semibold px-4 py-2 rounded-r text-sm shadow-md">
         BUSCAR
       </button>
     </div>
@@ -74,40 +74,50 @@
           <th class="px-6 py-3">Producto</th>
           <th class="px-6 py-3">Precio</th>
           <th class="px-6 py-3">Categoría</th>
-          <th class="px-6 py-3">Modificar Stock</th>
+          <th class="px-6 py-3">Stock Actual</th> <th>Modificar Stock</th>
           <th class="px-6 py-3">Acción</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100 bg-white">
-        @for (elemento of stockPaginado(); track elemento.id) {
-          <tr class="hover:bg-gray-50 transition-colors"
-              [class.bg-emerald-50\/30]="terminoBusquedaActivo() && elemento.producto?.nombre?.toLowerCase().includes(terminoBusquedaActivo().toLowerCase())">
-            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ elemento.producto?.nombre }}</td>
-            <td class="px-6 py-4 text-sm font-bold text-gray-700">{{ elemento.producto?.precio }} Bs</td>
-            <td class="px-6 py-4 text-sm text-gray-500">{{ elemento.producto?.categoria?.nombre || 'Sin categoría' }}</td>
-            <td class="px-6 py-4">
-              <div class="flex items-center space-x-3">
-                <button (click)="modificarCambioTemporal(elemento.id, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-bold hover:bg-gray-200">-</button>
-                <span class="text-sm font-semibold w-12 text-center" [class.text-red-600]="elemento.cantidad === 0">
-                  {{ elemento.cantidad + (cambiosTemporales()[elemento.id] || 0) }}
-                </span>
-                <button (click)="modificarCambioTemporal(elemento.id, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-bold hover:bg-gray-200">+</button>
-                @if (cambiosTemporales()[elemento.id]) {
-                  <span class="text-xs font-bold text-orange-600">({{ cambiosTemporales()[elemento.id] > 0 ? '+' : '' }}{{ cambiosTemporales()[elemento.id] }})</span>
-                }
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <button (click)="solicitarConfirmacion(elemento)" [disabled]="!(cambiosTemporales()[elemento.id])"
-                      class="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-semibold disabled:bg-gray-200">
-                Enviar
-              </button>
-            </td>
-          </tr>
-        } @empty {
-          <tr><td colspan="5" class="text-center py-12 text-gray-400 italic">No se encontraron productos.</td></tr>
-        }
-      </tbody>
+  @for (elemento of stockPaginado(); track elemento.id) {
+    <tr class="hover:bg-gray-50 transition-colors"
+        [class.bg-emerald-50\/30]="terminoBusquedaActivo() && elemento.producto?.nombre?.toLowerCase().includes(terminoBusquedaActivo().toLowerCase())">
+      
+      <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ elemento.producto?.nombre }}</td>
+      <td class="px-6 py-4 text-sm font-bold text-gray-700">{{ elemento.producto?.precio }} Bs</td>
+      <td class="px-6 py-4 text-sm text-gray-500">{{ elemento.producto?.categoria?.nombre || 'Sin categoría' }}</td>
+      
+      <td class="px-6 py-4 text-sm font-semibold text-gray-600">
+        <span [class.text-red-600]="elemento.cantidad === 0">
+          {{ elemento.cantidad }}
+        </span>
+      </td>
+
+      <td class="px-6 py-4">
+        <div class="flex items-center space-x-3">
+          <button (click)="modificarCambioTemporal(elemento.id, -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-bold hover:bg-gray-200">-</button>
+          
+          <span class="text-sm font-bold w-12 text-center" 
+                [class.text-orange-600]="cambiosTemporales()[elemento.id] && cambiosTemporales()[elemento.id] !== 0">
+            {{ cambiosTemporales()[elemento.id] || 0 }}
+          </span>
+          
+          <button (click)="modificarCambioTemporal(elemento.id, 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full font-bold hover:bg-gray-200">+</button>
+        </div>
+      </td>
+
+      <td class="px-6 py-4">
+        <button (click)="solicitarConfirmacion(elemento)" [disabled]="!(cambiosTemporales()[elemento.id])"
+                class="px-4 py-2 bg-emerald-700 text-white rounded text-xs font-semibold disabled:bg-gray-200">
+          Enviar
+        </button>
+      </td>
+
+    </tr>
+  } @empty {
+    <tr><td colspan="6" class="text-center py-12 text-gray-400 italic">No se encontraron productos.</td></tr>
+  }
+</tbody>
     </table>
   </div>
   
