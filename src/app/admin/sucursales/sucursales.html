@@ -30,7 +30,7 @@
               class="hover:scale-125 transition-transform px-2">🗑️</button>
           </td>
         </tr>
-        }
+        } 
       </tbody>
       <div class="flex justify-between items-center p-4 bg-gray-50/50 border-t border-gray-100">
         <span class="text-[10px] font-bold text-gray-400 uppercase">Total: {{ sucursales().length }}</span>
@@ -55,12 +55,12 @@
         <div class="relative">
           <label
             class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-2 bg-white px-1">Nombre</label>
-          <input formControlName="nombre" type="text"
+          <input formControlName="nombre" type="text" maxlength="20"
             class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none transition-all">
           @if (sucursalForm.get('nombre')?.invalid && sucursalForm.get('nombre')?.touched) {
           <span class="text-[10px] text-red-500 font-bold mt-1 ml-2">
             @if (sucursalForm.get('nombre')?.errors?.['required']) { El nombre es obligatorio }
-            @if (sucursalForm.get('nombre')?.errors?.['minlength']) { Mínimo 4 caracteres }
+            @if (sucursalForm.get('nombre')?.errors?.['minlength']) { Mínimo 6 caracteres }
             @if (sucursalForm.get('nombre')?.errors?.['pattern']) { No se permiten solo espacios }
           </span>
           }
@@ -70,12 +70,12 @@
           <div class="relative">
             <label
               class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-2 bg-white px-1">Direccion</label>
-            <input formControlName="direccion" type="text"
+            <input formControlName="direccion" type="text" maxlength="30"
               class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none">
             @if (sucursalForm.get('direccion')?.invalid && sucursalForm.get('direccion')?.touched) {
             <span class="text-[10px] text-red-500 font-bold mt-1 ml-2">
-              @if (sucursalForm.get('direccion')?.errors?.['required']) { La contraseña es obligatoria }
-              @if (sucursalForm.get('direccion')?.errors?.['minlength']) { Mínimo 6 caracteres }
+              @if (sucursalForm.get('direccion')?.errors?.['required']) { La dirección es obligatoria }
+              @if (sucursalForm.get('direccion')?.errors?.['minlength']) { Mínimo 10 caracteres }
               @if (sucursalForm.get('direccion')?.errors?.['pattern']) { No se permiten solo espacios }
             </span>
             }
@@ -83,11 +83,11 @@
           <div class="relative">
             <label
               class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-2 bg-white px-1">Teléfono</label>
-            <input formControlName="telefono" type="text"
+            <input formControlName="telefono" type="tel" maxlength="8"
               class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none">
             @if (sucursalForm.get('telefono')?.invalid && sucursalForm.get('telefono')?.touched) {
             <span class="text-[10px] text-red-500 font-bold mt-1 ml-2">
-              @if (sucursalForm.get('telefono')?.errors?.['required']) { La contraseña es obligatoria }
+              @if (sucursalForm.get('telefono')?.errors?.['required']) { El número es obligatorio }
               @if (sucursalForm.get('telefono')?.errors?.['minlength']) { El número debe constar de 8 dígitos }
               @if (sucursalForm.get('telefono')?.errors?.['maxlength']) { El número debe constar de 8 dígitos }
             </span>

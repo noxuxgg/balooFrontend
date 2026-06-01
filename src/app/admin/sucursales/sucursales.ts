@@ -25,8 +25,8 @@ export class Sucursales {
   errorServidor = signal('');
 
   sucursalForm = new FormGroup({
-    nombre: new FormControl('', [Validators.required, Validators.minLength(4), Validators.maxLength(30), Validators.pattern(/^\S.*$/)]),
-    direccion: new FormControl('', [Validators.required, Validators.minLength(6), Validators.maxLength(30), Validators.pattern(/^\S.*$/)]),
+    nombre: new FormControl('', [Validators.required, Validators.minLength(6), Validators.maxLength(20), Validators.pattern(/^\S.*$/)]),
+    direccion: new FormControl('', [Validators.required, Validators.minLength(10), Validators.maxLength(30), Validators.pattern(/^\S.*$/)]),
     telefono: new FormControl('', [Validators.required, Validators.minLength(8), Validators.maxLength(8)])
   });
 
