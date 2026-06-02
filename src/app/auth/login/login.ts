@@ -25,7 +25,7 @@ export class Login {
       (res: any) =>{
         console.log(res);
         localStorage.setItem("access_token", res.access_token);
-        this.router.navigate(['/admin/usuarios']);
+        this.router.navigate(['/admin/perfil']);
       },
       (erro) => {
         console.log(erro);
