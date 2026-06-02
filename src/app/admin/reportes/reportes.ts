@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { PagosPedidoService } from '../../core/services/pagos-pedido.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -6,6 +6,8 @@ import { SucursalService } from '../../core/services/sucursales.service';
 import { PedidoService } from '../../core/services/pedidos.service';
 import { VentasService } from '../../core/services/ventas.service';
 import { StockService } from '../../core/services/stock.service';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-reportes',
@@ -21,7 +23,12 @@ export class Reportes {
   pedidoService = inject(PedidoService);
   ventasService = inject(VentasService);
   sucursalService = inject(SucursalService);
-  stockService = inject(StockService)
+  stockService = inject(StockService);
+
+  private lineCanvas = viewChild<ElementRef<HTMLCanvasElement>>('lineChartCanvas');
+  private barCanvas = viewChild<ElementRef<HTMLCanvasElement>>('barChartCanvas');
+  private lineChartInstance?: Chart;
+  private barChartInstance?: Chart;
 
   ventaMensual = signal<number>(0);
   ventasHoy = signal<number>(0);
@@ -42,14 +49,14 @@ export class Reportes {
   constructor() {
     this.cargarDatosIniciales();
     this.listarSucursales();
-    
+
   }
 
   obtenerPrimerDiaMes(): string {
     const hoy = new Date();
     const anio = hoy.getFullYear();
     const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    return `${anio}-${mes}-01`; 
+    return `${anio}-${mes}-01`;
   }
 
   obtenerFechaHoy(): string {
@@ -73,7 +80,7 @@ export class Reportes {
       this.listaPedidos = pedidos;
       this.ventasService.funListar().subscribe((ventas: any) => {
         this.listaVentas = ventas;
-        
+
         this.stockService.funListar().subscribe({
           next: (stocks: any) => {
             this.listaStocks = stocks;
@@ -88,15 +95,15 @@ export class Reportes {
   calcularReporte() {
     const valores = this.filtrosForm.value;
     const hoyStr = valores.fechaFin ? valores.fechaFin.trim() : this.obtenerFechaHoy();
-    
+
     let contadorPedidos = 0;
     let ingresosMensuales = 0;
     let ingresosHoy = 0;
-    let contadorAlertas = 0; 
+    let contadorAlertas = 0;
     const sucursalFiltro = valores.sucursal;
     for (let p of this.listaPedidos) {
       let fechaP: string | null = null;
-      
+
       if (p.fechaPedido) {
         const fechaTexto = String(p.fechaPedido).split('T')[0].trim();
         const d = new Date(fechaTexto.replace(/-/g, '\/'));
@@ -107,11 +114,11 @@ export class Reportes {
           fechaP = `${anio}-${mes}-${dia}`;
         }
       }
-      
+
       let cumpleSucursal = sucursalFiltro === 'todas';
       if (!cumpleSucursal) {
-        const idSucursalPedido = p.sucursal && typeof p.sucursal === 'object' 
-          ? p.sucursal.id 
+        const idSucursalPedido = p.sucursal && typeof p.sucursal === 'object'
+          ? p.sucursal.id
           : (p.sucursalId || p.sucursal);
         cumpleSucursal = Number(idSucursalPedido) === Number(sucursalFiltro);
       }
@@ -132,7 +139,7 @@ export class Reportes {
     }
     for (let v of this.listaVentas) {
       let fechaV: string | null = null;
-      
+
       if (v.fecha) {
         const fechaTexto = String(v.fecha).split('T')[0].trim();
         const d = new Date(fechaTexto.replace(/-/g, '\/'));
@@ -143,15 +150,15 @@ export class Reportes {
           fechaV = `${anio}-${mes}-${dia}`;
         }
       }
-      
+
       let cumpleSucursal = sucursalFiltro === 'todas';
       if (!cumpleSucursal) {
-        const idSucursalVenta = v.sucursal && typeof v.sucursal === 'object' 
-          ? v.sucursal.id 
+        const idSucursalVenta = v.sucursal && typeof v.sucursal === 'object'
+          ? v.sucursal.id
           : (v.sucursalId || v.sucursal);
 
         if (idSucursalVenta === null || idSucursalVenta === undefined) {
-          cumpleSucursal = true; 
+          cumpleSucursal = true;
         } else {
           cumpleSucursal = Number(idSucursalVenta) === Number(sucursalFiltro);
         }
@@ -171,8 +178,8 @@ export class Reportes {
       }
     }
     for (let s of this.listaStocks) {
-      const idSucursalStock = s.sucursal && typeof s.sucursal === 'object' 
-        ? s.sucursal.id 
+      const idSucursalStock = s.sucursal && typeof s.sucursal === 'object'
+        ? s.sucursal.id
         : (s.sucursal_id || s.sucursalId || s.sucursal);
       const cumpleSucursal = sucursalFiltro === 'todas' || Number(idSucursalStock) === Number(sucursalFiltro);
       if (cumpleSucursal) {
@@ -187,7 +194,108 @@ export class Reportes {
     this.ventaMensual.set(ingresosMensuales);
     this.ventasHoy.set(ingresosHoy);
     this.alertasStock.set(contadorAlertas);
-  
+    this.renderizarGraficoTendencia(valores.sucursal, valores.fechaInicio, valores.fechaFin);
+    this.renderizarGraficoComparativo(valores.fechaInicio, valores.fechaFin);
   }
-  
+
+  private renderizarGraficoTendencia(sucursalFiltro: any, inicio: any, fin: any) {
+    const canvas = this.lineCanvas()?.nativeElement;
+    if (!canvas) return;
+    if (this.lineChartInstance) this.lineChartInstance.destroy();
+    const mapaTendencia: { [fecha: string]: number } = {};
+
+    const procesarElemento = (lista: any[], propiedadFecha: string) => {
+      for (let item of lista) {
+        if (!item[propiedadFecha]) continue;
+        const fechaStr = String(item[propiedadFecha]).split('T')[0].trim();
+        
+        let cumpleSucursal = sucursalFiltro === 'todas';
+        if (!cumpleSucursal) {
+          const idSuc = item.sucursal && typeof item.sucursal === 'object' ? item.sucursal.id : (item.sucursalId || item.sucursal_id || item.sucursal);
+          cumpleSucursal = Number(idSuc) === Number(sucursalFiltro);
+        }
+        const cumpleInicio = !inicio || fechaStr >= inicio;
+        const cumpleFin = !fin || fechaStr <= fin;
+
+        if (cumpleSucursal && cumpleInicio && cumpleFin) {
+          const total = Number(item.total) || 0;
+          mapaTendencia[fechaStr] = (mapaTendencia[fechaStr] || 0) + total;
+        }
+      }
+    };
+
+    procesarElemento(this.listaPedidos, 'fechaPedido');
+    procesarElemento(this.listaVentas, 'fecha');
+    const fechasOrdenadas = Object.keys(mapaTendencia).sort();
+    const totalesOrdenados = fechasOrdenadas.map(f => mapaTendencia[f]);
+
+    this.lineChartInstance = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: fechasOrdenadas.length ? fechasOrdenadas : ['Sin datos'],
+        datasets: [{
+          label: 'Ingresos Totales (Bs.)',
+          data: totalesOrdenados.length ? totalesOrdenados : [0],
+          borderColor: '#013924',
+          backgroundColor: 'rgba(1, 57, 36, 0.05)',
+          tension: 0.2,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  private renderizarGraficoComparativo(inicio: any, fin: any) {
+    const canvas = this.barCanvas()?.nativeElement;
+    if (!canvas) return;
+    if (this.barChartInstance) this.barChartInstance.destroy();
+    const mapaSucursales: { [id: string]: number } = {};
+    const procesarLista = (lista: any[], propiedadFecha: string) => {
+      for (let item of lista) {
+        if (!item[propiedadFecha]) continue;
+        const fechaStr = String(item[propiedadFecha]).split('T')[0].trim();
+        if ((inicio && fechaStr < inicio) || (fin && fechaStr > fin)) continue;
+
+        const idSuc = item.sucursal && typeof item.sucursal === 'object' ? item.sucursal.id : (item.sucursalId || item.sucursal_id || item.sucursal);
+        if (idSuc) {
+          mapaSucursales[idSuc] = (mapaSucursales[idSuc] || 0) + (Number(item.total) || 0);
+        }
+      }
+    };
+
+    procesarLista(this.listaPedidos, 'fechaPedido');
+    procesarLista(this.listaVentas, 'fecha');
+    const nombresLabels: string[] = [];
+    const valoresData: number[] = [];
+    const listaSucursales = this.sucursales() || [];
+
+    listaSucursales.forEach((suc: any) => {
+      nombresLabels.push(suc.nombre);
+      valoresData.push(mapaSucursales[suc.id] || 0);
+    });
+
+    this.barChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: nombresLabels.length ? nombresLabels : ['Sin sucursales'],
+        datasets: [{
+          label: 'Ventas de la Sucursal (Bs.)',
+          data: valoresData.length ? valoresData : [0],
+          backgroundColor: '#0E432F',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
 }
