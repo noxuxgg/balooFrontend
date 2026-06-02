@@ -22,6 +22,7 @@ export class Clientes {
   // Control de Modal e IDs
   isOpen = false;
   confirmarEliminarOpen = signal(false);
+  advertenciaOpen = signal(false);
   idParaEliminar: number | null = null;
   idClienteSeleccionado = '';
 
@@ -84,7 +85,7 @@ export class Clientes {
   guardarCliente() {
     if (this.clienteForm.invalid) {
       this.clienteForm.markAllAsTouched();
-      alert('Por favor, completa todos los campos requeridos correctamente.');
+      this.advertenciaOpen.set(true);
       return;
     }
 

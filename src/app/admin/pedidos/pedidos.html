@@ -19,7 +19,8 @@
           <th class="p-4 text-center">F. Entrega</th>
           <th class="p-4 text-center">Hora</th>
           <th class="p-4 text-center">Total</th>
-          <th class="p-4 text-center">Estado</th>
+          <th class="p-4 text-center">Est. Entrega</th>
+          <th class="p-4 text-center">Est. Pago</th>
           <th class="p-4 text-center">Acciones</th>
         </tr>
       </thead>
@@ -32,16 +33,57 @@
             <td class="p-4 text-center text-gray-600 text-xs">{{ p.fechaEntrega | date:'dd/MM/yyyy' }}</td>
             <td class="p-4 text-center text-gray-600 text-xs">{{ p.horaEntrega }}</td>
             <td class="p-4 text-center font-bold text-[#013924]">{{ p.total }} Bs</td>
+            
             <td class="p-4 text-center">
-              <span [class]="p.estado
-                ? 'bg-emerald-100 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full uppercase'
-                : 'bg-red-100 text-red-500 text-[10px] font-black px-3 py-1 rounded-full uppercase'">
-                {{ p.estado ? 'Activo' : 'Inactivo' }}
-              </span>
+              <div class="flex justify-center">
+                @if (p.estadoEntrega === 1) { 
+                  <span class="inline-block w-24 text-center bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+                    Pendiente
+                  </span> 
+                }
+                @if (p.estadoEntrega === 3) { 
+                  <span class="inline-block w-24 text-center bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+                    Entregado
+                  </span> 
+                }
+              </div>
             </td>
+
             <td class="p-4 text-center">
-              <button (click)="mostrarPedido(p)" class="hover:scale-125 transition-transform px-2 text-orange-400">✏️</button>
-              <button (click)="abrirConfirmacion(p.id)" class="hover:scale-125 transition-transform px-2 text-gray-400">🗑️</button>
+              <div class="flex justify-center">
+                @if (p.estadoPago === 1) { 
+                  <span class="inline-block w-28 text-center bg-red-100 text-red-600 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+                    Por Pagar
+                  </span> 
+                }
+                @if (p.estadoPago === 2) { 
+                  <span class="inline-block w-28 text-center bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+                    S. Pendiente
+                  </span> 
+                }
+                @if (p.estadoPago === 3) { 
+                  <span class="inline-block w-28 text-center bg-teal-100 text-teal-700 text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+                    Pagado
+                  </span> 
+                }
+              </div>
+            </td>
+
+            <td class="p-4 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <div class="w-7 flex justify-center">
+                  @if (p.estadoEntrega === 1) {
+                    <button (click)="marcarComoEntregado(p)" 
+                      title="Marcar como Entregado"
+                      class="hover:scale-125 transition-transform text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded p-1 text-xs leading-none">
+                      ✅
+                    </button>
+                  }
+                </div>
+                
+                <button (click)="mostrarPedido(p)" class="hover:scale-125 transition-transform px-1 text-orange-400">✏️</button>
+                <button (click)="abrirConfirmacion(p.id)" class="hover:scale-125 transition-transform px-1 text-gray-400">🗑️</button>
+              </div>
             </td>
           </tr>
         }
@@ -216,6 +258,28 @@
           </div>
 
           <!-- Observaciones -->
+          <div class="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Control de Estados</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="relative">
+                <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Estado Entrega</label>
+                <div class="w-full border-2 border-gray-100 bg-gray-100 p-3 rounded-xl text-xs font-bold text-gray-700 select-none">
+                  @if (pedidoForm.get('estadoEntrega')?.value === 1) { <span>📦 PENDIENTE DE ENTREGA</span> }
+                  @if (pedidoForm.get('estadoEntrega')?.value === 3) { <span>🚚 ENTREGADO</span> }
+                </div>
+              </div>
+
+              <div class="relative">
+                <label class="text-[10px] font-black text-[#013924] uppercase absolute -top-2 left-2 bg-gray-50 px-1 z-10">Estado Pago</label>
+                <div class="w-full border-2 border-gray-100 bg-gray-100 p-3 rounded-xl text-xs font-bold text-gray-700 select-none">
+                  @if (pedidoForm.get('estadoPago')?.value === 1) { <span>❌ POR PAGAR</span> }
+                  @if (pedidoForm.get('estadoPago')?.value === 2) { <span>⚠️ PAGO PARCIAL (SALDO)</span> }
+                  @if (pedidoForm.get('estadoPago')?.value === 3) { <span>✅ PAGADO COMPLETO</span> }
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="relative">
             <label class="text-[10px] font-black text-gray-400 uppercase absolute -top-2 left-2 bg-white px-1 z-10">Observaciones</label>
             <textarea formControlName="observaciones" rows="3"
@@ -224,13 +288,14 @@
             </textarea>
           </div>
 
+
           <!-- Estado (solo al editar) -->
           @if (idPedidoSeleccionado) {
             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <span class="text-[10px] font-black text-[#013924] uppercase">Estado del Pedido</span>
+              <span class="text-[10px] font-black text-[#013924] uppercase">Disponibilidad del Registro</span>
               <label class="flex items-center gap-3 cursor-pointer select-none">
                 <span class="text-[10px] font-bold text-gray-400 uppercase">
-                  {{ pedidoForm.get('estado')?.value ? 'Activo' : 'Inactivo' }}
+                  {{ pedidoForm.get('estado')?.value ? 'Registro Activo' : 'Registro Inactivo' }}
                 </span>
                 <input type="checkbox" formControlName="estado" class="hidden">
                 <div [class]="pedidoForm.get('estado')?.value
@@ -247,7 +312,10 @@
 
           <!-- Botón Guardar -->
           <button type="submit"
-            class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
+            [disabled]="pedidoForm.invalid"
+            [class]="pedidoForm.invalid 
+              ? 'w-full bg-gray-300 text-gray-500 py-4 rounded-2xl font-bold cursor-not-allowed uppercase tracking-widest transition-all select-none'
+              : 'w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest cursor-pointer'">
             {{ idPedidoSeleccionado ? 'ACTUALIZAR PEDIDO' : 'GUARDAR PEDIDO' }}
           </button>
         </form>
@@ -283,4 +351,21 @@
       </div>
     </div>
   }
+
+  @if (advertenciaOpen().abierto) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 border border-gray-100 text-center">
+        <div class="bg-amber-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-amber-500 text-3xl">⚠️</span>
+        </div>
+        <h3 class="text-lg font-bold text-[#013924] mb-2">{{ advertenciaOpen().titulo }}</h3>
+        <p class="text-gray-500 text-sm mb-6">{{ advertenciaOpen().mensaje }}</p>
+        <button (click)="advertenciaOpen.set({ abierto: false, titulo: '', mensaje: '' })"
+          class="w-full py-3 rounded-xl font-bold bg-[#013924] text-white hover:opacity-90 transition-colors shadow-lg uppercase text-xs tracking-widest">
+          Entendido
+        </button>
+      </div>
+    </div>
+  }
 </div>
+

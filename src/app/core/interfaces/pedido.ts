@@ -4,6 +4,8 @@ export interface Pedido {
     horaEntrega: string;
     cantidadPersonas: number;
     estado: boolean;
+    estadoEntrega: number;
+    estadoPago: number;
     lugarEntrega: string;
     total: number;
     adelanto: number;

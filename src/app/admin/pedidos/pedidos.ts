@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { JsonPipe, DatePipe } from '@angular/common';
 import { PedidoService } from '../../core/services/pedidos.service';
 import { AuthService } from '../../core/services/auth.service';
+import { Pedido } from '../../core/interfaces/pedido';
 
 @Component({
   selector: 'app-pedidos',
@@ -27,14 +28,13 @@ export class Pedidos {
   // Control de Modal e IDs
   isOpen = false;
   confirmarEliminarOpen = signal(false);
-  idParaEliminar: number | null = null;
+  advertenciaOpen = signal({ abierto: false, titulo: '', mensaje: '' });idParaEliminar: number | null = null;
   idPedidoSeleccionado = '';
 
   // Paginación
   paginaActual   = signal(1);
   itemsPorPagina = 5;
 
-  // Formulario Pedido — todos los selects como string (igual que ventas)
   pedidoForm = new FormGroup({
     clienteId:        new FormControl<number | null>(null,  [Validators.required]),
     sucursalId:       new FormControl<number | null>(null,  [Validators.required]),
@@ -50,25 +50,37 @@ export class Pedidos {
     adelanto:         new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
     saldo:            new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
     observaciones:    new FormControl(''),
+    estadoEntrega:    new FormControl<number>(1, [Validators.required]),
+    estadoPago:       new FormControl<number>(1, [Validators.required]),
     estado:           new FormControl<boolean>(true),
   });
 
   constructor() {
     this.listarTodo();
-    // Carga el usuario autenticado automáticamente, igual que en ventas
     this.authService.funGetPerfil().subscribe((perfil: any) => {
       this.usuarioActualId.set(perfil.id);
       this.usuarioActualNombre.set(perfil.nombreUsuario);
     });
     this.pedidoForm.valueChanges.subscribe(val =>{
-      const tot = val.total || 0;
-      const ade = val.adelanto || 0;
+      const tot = Number(val.total) || 0;
+      const ade = Number(val.adelanto) || 0;
       const calculoSaldo = tot - ade;
 
+      // Determinar el estado de pago automático
+      let autoEstadoPago = 1; // Por Pagar
+      if (tot > 0 && calculoSaldo === 0) {
+        autoEstadoPago = 3; // Pagado
+      } else if (ade > 0 && calculoSaldo > 0) {
+        autoEstadoPago = 2; // Pago Parcial
+      }
+
       this.pedidoForm.patchValue(
-        { saldo: calculoSaldo > 0 ? calculoSaldo : 0},
+        { 
+          saldo: calculoSaldo > 0 ? calculoSaldo : 0,
+          estadoPago: autoEstadoPago
+        },
         { emitEvent: false }
-      )
+      );
     });
   }
 
@@ -79,24 +91,31 @@ listarTodo() {
   });
   this.pedidoService.funListarCliente().subscribe({
     next: (res: any) => {
-      console.log('Clientes:', res);  // ← ¿llegan datos aquí?
+      console.log('Clientes:', res); 
       this.clientes.set(res);
     },
-    error: (err) => console.error('Error clientes:', err)  // ← ¿hay error?
+    error: (err) => {console.error('Error clientes:', err); } 
   });
   this.pedidoService.funListarSucursal().subscribe({
     next: (res: any) => {
-      console.log('Sucursales:', res);  // ← ¿llegan datos aquí?
+      console.log('Sucursales:', res); 
       this.sucursales.set(res);
     },
-    error: (err) => console.error('Error sucursales:', err)
+    error: (err) => {console.error('Error sucursales:', err); }
   });
 }
 
   // --- PAGINACIÓN ---
-  pedidosPaginados = computed(() => {
-    const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
-    return this.pedidos().slice(inicio, inicio + this.itemsPorPagina);
+  pedidosOrdenados=computed(() => {
+    return [...this.pedidos()].sort((a,b) => {
+      return new Date(a.fechaEntrega).getTime() - new Date(b.fechaEntrega).getTime();
+    });
+  });
+
+  pedidosPaginados=computed(() => {
+    const inicio=(this.paginaActual() - 1) * this.itemsPorPagina;
+    const fin=inicio + this.itemsPorPagina;
+    return this.pedidosOrdenados().slice(inicio, fin);
   });
 
   totalPaginas = computed(() =>
@@ -118,7 +137,11 @@ listarTodo() {
   guardarPedido() {
     if (this.pedidoForm.invalid) {
       this.pedidoForm.markAllAsTouched();
-      alert('Por favor, completa todos los campos requeridos correctamente.');
+      this.advertenciaOpen.set({
+        abierto: true,
+        titulo: 'Campos Incompletos',
+        mensaje: 'Por favor, rellena todos los campos obligatorios resaltados en rojo antes de continuar.'
+      });
       return;
     }
 
@@ -126,7 +149,7 @@ listarTodo() {
 
     const datosEnvio = {
       clienteId:        Number(v.clienteId),
-      usuarioId:        this.usuarioActualId(),   // viene del auth, no del form
+      usuarioId:        this.usuarioActualId(), 
       sucursalId:       Number(v.sucursalId),
       fechaPedido:      v.fechaPedido ?? '',
       fechaEntrega:     v.fechaEntrega ?? '',
@@ -137,6 +160,8 @@ listarTodo() {
       adelanto:         Number(v.adelanto),
       saldo:            Number(v.saldo),
       observaciones:    v.observaciones ?? '',
+      estadoEntrega:    Number(v.estadoEntrega ?? 1),
+      estadoPago:       Number(v.estadoPago ?? 1),
       estado:           v.estado ?? true,
     };
 
@@ -179,21 +204,67 @@ listarTodo() {
   }
 }
 
+marcarComoEntregado(pedido: Pedido) {
+    const p=pedido as Record<string, any>;
+    const pago=Number(p['estadoPago']);
+    
+    if (pago !== 3) {
+      this.advertenciaOpen.set({
+        abierto: true,
+        titulo: 'Saldo Pendiente',
+        mensaje: 'No se puede entregar el pedido porque aún no ha sido pagado por completo. Registra el pago total antes de despacharlo.'
+      }); 
+      return;
+    }
+
+    const datosActualizar: unknown={
+      ...pedido,
+      clienteId: Number(p['cliente']?.id ?? p['clienteId']),
+      usuarioId: p['usuario']?.id ?? p['usuarioId'],
+      sucursalId: Number(p['sucursal']?.id ?? p['sucursalId']),
+      fechaPedido: this.formatDate(p['fechaPedido']),
+      fechaEntrega: this.formatDate(p['fechaEntrega']),
+      horaEntrega: p['horaEntrega'] ?? '',
+      cantidadPersonas: Number(p['cantidadPersonas']),
+      lugarEntrega: p['lugarEntrega'] ?? '',
+      total: Number(p['total']),
+      adelanto: Number(p['adelanto']),
+      saldo: Number(p['saldo']),
+      observaciones: p['observaciones'] ?? '',
+      estadoEntrega: 3, 
+      estadoPago: pago,
+      estado: p['estado'] ?? true,
+    };
+
+    const idPedido=Number(p['id']);
+
+    this.pedidoService.funEditarPedido(datosActualizar as any, idPedido).subscribe({
+      next: () => {
+        this.listarTodo();
+      },
+      error: (err) => {
+        console.error('Error al marcar como entregado:', err);
+      }
+    });
+  }
+
   mostrarPedido(datos: any) {
-    this.idPedidoSeleccionado = datos.id;
+    this.idPedidoSeleccionado = datos['id'];
     this.pedidoForm.patchValue({
-      clienteId:        Number(datos.cliente?.id  ?? datos.clienteId  ?? ''),
-      sucursalId:       Number(datos.sucursal?.id ?? datos.sucursalId ?? ''),
-      fechaPedido:      this.formatDate(datos.fechaPedido),
-      fechaEntrega:     this.formatDate(datos.fechaEntrega),
-      horaEntrega:      datos.horaEntrega,
-      cantidadPersonas: datos.cantidadPersonas,
-      lugarEntrega:     datos.lugarEntrega,
-      total:            datos.total,
-      adelanto:         datos.adelanto,
-      saldo:            datos.saldo,
-      observaciones:    datos.observaciones,
-      estado:           datos.estado,
+      clienteId:        Number(datos['clienteId'] ?? datos['cliente']?.['id'] ?? ''),
+      sucursalId:       Number(datos['sucursalId'] ?? datos['sucursal']?.['id'] ?? ''),
+      fechaPedido:      this.formatDate(datos['fechaPedido']),
+      fechaEntrega:     this.formatDate(datos['fechaEntrega']),
+      horaEntrega:      datos['horaEntrega'] ?? '',
+      cantidadPersonas: datos['cantidadPersonas'] ?? 0,
+      lugarEntrega:     datos['lugarEntrega'] ?? '',
+      total:            Number(datos['total']),
+      adelanto:         Number(datos['adelanto']),
+      saldo:            Number(datos['saldo']),
+      observaciones:    datos['observaciones'] ?? '',
+      estadoEntrega:    Number(datos['estadoEntrega'] ?? 1),
+      estadoPago:       Number(datos['estadoPago']),
+      estado:           datos['estado'] ?? true,
     });
     this.isOpen = true;
   }
@@ -205,7 +276,7 @@ listarTodo() {
 
   resetForm() {
     this.listarTodo();
-    this.pedidoForm.reset({ estado: true });
+    this.pedidoForm.reset({ estadoEntrega: 1, estadoPago: 1, estado: true });
     this.idPedidoSeleccionado = '';
     this.isOpen = false;
     this.paginaActual.set(1);
@@ -219,6 +290,8 @@ listarTodo() {
     
     this.pedidoForm.reset({
       fechaPedido: hoy,
+      estadoEntrega: 1,
+      estadoPago: 1,
       estado: true,
       clienteId: null,
       sucursalId: null,
