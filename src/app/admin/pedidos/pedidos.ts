@@ -205,8 +205,8 @@ listarTodo() {
 }
 
 marcarComoEntregado(pedido: Pedido) {
-    const p: any=pedido;
-    const pago=Number(p.estadoPago);
+    const p=pedido as Record<string, any>;
+    const pago=Number(p['estadoPago']);
     
     if (pago !== 3) {
       this.advertenciaOpen.set({
@@ -217,28 +217,28 @@ marcarComoEntregado(pedido: Pedido) {
       return;
     }
 
-    const datosActualizar: any={
-      ...p,
-      clienteId: Number(p.cliente?.id ?? p.clienteId),
-      usuarioId: p.usuario?.id ?? p.usuarioId,
-      sucursalId: Number(p.sucursal?.id ?? p.sucursalId),
-      fechaPedido: this.formatDate(p.fechaPedido),
-      fechaEntrega: this.formatDate(p.fechaEntrega),
-      horaEntrega: p.horaEntrega ?? '',
-      cantidadPersonas: Number(p.cantidadPersonas),
-      lugarEntrega: p.lugarEntrega ?? '',
-      total: Number(p.total),
-      adelanto: Number(p.adelanto),
-      saldo: Number(p.saldo),
-      observaciones: p.observaciones ?? '',
+    const datosActualizar: unknown={
+      ...pedido,
+      clienteId: Number(p['cliente']?.id ?? p['clienteId']),
+      usuarioId: p['usuario']?.id ?? p['usuarioId'],
+      sucursalId: Number(p['sucursal']?.id ?? p['sucursalId']),
+      fechaPedido: this.formatDate(p['fechaPedido']),
+      fechaEntrega: this.formatDate(p['fechaEntrega']),
+      horaEntrega: p['horaEntrega'] ?? '',
+      cantidadPersonas: Number(p['cantidadPersonas']),
+      lugarEntrega: p['lugarEntrega'] ?? '',
+      total: Number(p['total']),
+      adelanto: Number(p['adelanto']),
+      saldo: Number(p['saldo']),
+      observaciones: p['observaciones'] ?? '',
       estadoEntrega: 3, 
       estadoPago: pago,
-      estado: p.estado ?? true,
+      estado: p['estado'] ?? true,
     };
 
-    const idPedido=Number(p.id);
+    const idPedido=Number(p['id']);
 
-    this.pedidoService.funEditarPedido(datosActualizar, idPedido).subscribe({
+    this.pedidoService.funEditarPedido(datosActualizar as any, idPedido).subscribe({
       next: () => {
         this.listarTodo();
       },
