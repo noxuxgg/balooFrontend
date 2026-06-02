@@ -94,14 +94,14 @@ listarTodo() {
       console.log('Clientes:', res);  // ← ¿llegan datos aquí?
       this.clientes.set(res);
     },
-    error: (err) => console.error('Error clientes:', err)  // ← ¿hay error?
+    error: (err) => {console.error('Error clientes:', err); }  // ← ¿hay error?
   });
   this.pedidoService.funListarSucursal().subscribe({
     next: (res: any) => {
       console.log('Sucursales:', res);  // ← ¿llegan datos aquí?
       this.sucursales.set(res);
     },
-    error: (err) => console.error('Error sucursales:', err)
+    error: (err) => {console.error('Error sucursales:', err); }
   });
 }
 
@@ -201,8 +201,8 @@ listarTodo() {
   }
 }
 
-marcarComoEntregado(pedido: any) {
-    if (Number(pedido.estadoPago) !== 3) {
+marcarComoEntregado(pedido: Record<string,any>) {
+    if (Number(pedido['estadoPago']) !== 3) {
       this.advertenciaOpen.set({
         abierto: true,
         titulo: 'Saldo Pendiente',
@@ -211,45 +211,45 @@ marcarComoEntregado(pedido: any) {
       return;
     }
     const datosActualizar = {
-      clienteId: Number(pedido.cliente?.id ?? pedido.clienteId),
-      usuarioId: pedido.usuario?.id ?? pedido.usuarioId,
-      sucursalId: Number(pedido.sucursal?.id ?? pedido.sucursalId),
-      fechaPedido: this.formatDate(pedido.fechaPedido),
-      fechaEntrega: this.formatDate(pedido.fechaEntrega),
-      horaEntrega: pedido.horaEntrega ?? '',
-      cantidadPersonas: Number(pedido.cantidadPersonas),
-      lugarEntrega: pedido.lugarEntrega ?? '',
-      total: Number(pedido.total),
-      adelanto: Number(pedido.adelanto),
-      saldo: Number(pedido.saldo),
-      observaciones: pedido.observaciones ?? '',
+      clienteId: Number(pedido['clienteId'] ?? pedido['cliente']?.['id']),
+      usuarioId: pedido['usuarioId'] ?? pedido['usuario']?.['id'],
+      sucursalId: Number(pedido['sucursalId'] ?? pedido['sucursal']?.['id']),
+      fechaPedido: this.formatDate(pedido['fechaPedido']),
+      fechaEntrega: this.formatDate(pedido['fechaEntrega']),
+      horaEntrega: pedido['horaEntrega'] ?? '',
+      cantidadPersonas: Number(pedido['cantidadPersonas']),
+      lugarEntrega: pedido['lugarEntrega'] ?? '',
+      total: Number(pedido['total']),
+      adelanto: Number(pedido['adelanto']),
+      saldo: Number(pedido['saldo']),
+      observaciones: pedido['observaciones'] ?? '',
       estadoEntrega: 3, 
-      estadoPago: Number(pedido.estadoPago),
-      estado: pedido.estado ?? true,
+      estadoPago: Number(pedido['estadoPago']),
+      estado: pedido['estado'] ?? true,
     };
-    this.pedidoService.funEditarPedido(datosActualizar as any, Number(pedido.id)).subscribe({
+    this.pedidoService.funEditarPedido(datosActualizar as any, Number(pedido['id'])).subscribe({
       next: () => this.listarTodo(),
       error: (err) => console.error('Error al marcar como entregado:', err)
     });
   }
 
   mostrarPedido(datos: any) {
-    this.idPedidoSeleccionado = datos.id;
+    this.idPedidoSeleccionado = datos['id'];
     this.pedidoForm.patchValue({
-      clienteId:        Number(datos.cliente?.id  ?? datos.clienteId  ?? ''),
-      sucursalId:       Number(datos.sucursal?.id ?? datos.sucursalId ?? ''),
-      fechaPedido:      this.formatDate(datos.fechaPedido),
-      fechaEntrega:     this.formatDate(datos.fechaEntrega),
-      horaEntrega:      datos.horaEntrega,
-      cantidadPersonas: datos.cantidadPersonas,
-      lugarEntrega:     datos.lugarEntrega,
-      total:            datos.total,
-      adelanto:         datos.adelanto,
-      saldo:            datos.saldo,
-      observaciones:    datos.observaciones,
-      estadoEntrega:    datos.estadoEntrega ?? 1,
-      estadoPago:       datos.estadoPago ?? 1,
-      estado:           datos.estado,
+      clienteId:        Number(datos['clienteId'] ?? datos['cliente']?.['id'] ?? ''),
+      sucursalId:       Number(datos['sucursalId'] ?? datos['sucursal']?.['id'] ?? ''),
+      fechaPedido:      this.formatDate(datos['fechaPedido']),
+      fechaEntrega:     this.formatDate(datos['fechaEntrega']),
+      horaEntrega:      datos['horaEntrega'] ?? '',
+      cantidadPersonas: datos['cantidadPersonas'] ?? 0,
+      lugarEntrega:     datos['lugarEntrega'] ?? '',
+      total:            Number(datos['total']),
+      adelanto:         Number(datos['adelanto']),
+      saldo:            Number(datos['saldo']),
+      observaciones:    datos['observaciones'] ?? '',
+      estadoEntrega:    Number(datos['estadoEntrega'] ?? 1),
+      estadoPago:       Number(datos['estadoPago']),
+      estado:           datos['estado'] ?? true,
     });
     this.isOpen = true;
   }
