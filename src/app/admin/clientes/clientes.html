@@ -171,7 +171,10 @@
           }
 
           <button type="submit"
-            class="w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest">
+            [disabled]="clienteForm.invalid"
+            [class]="clienteForm.invalid 
+              ? 'w-full bg-gray-300 text-gray-500 py-4 rounded-2xl font-bold cursor-not-allowed uppercase tracking-widest transition-all select-none'
+              : 'w-full bg-[#013924] text-white py-4 rounded-2xl font-bold shadow-lg hover:opacity-90 transition-all uppercase tracking-widest cursor-pointer'">
             {{ idClienteSeleccionado ? 'ACTUALIZAR CLIENTE' : 'GUARDAR CLIENTE' }}
           </button>
         </form>
@@ -202,6 +205,22 @@
             Sí, eliminar
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  @if (advertenciaOpen()) {
+    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-[#013924]/40 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6 border border-gray-100 text-center">
+        <div class="bg-amber-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-amber-500 text-3xl">⚠️</span>
+        </div>
+        <h3 class="text-lg font-bold text-[#013924] mb-2">Campos Incompletos</h3>
+        <p class="text-gray-500 text-sm mb-6">Por favor, rellena todos los campos obligatorios resaltados en rojo antes de continuar.</p>
+        <button (click)="advertenciaOpen.set(false)"
+          class="w-full py-3 rounded-xl font-bold bg-[#013924] text-white hover:opacity-90 transition-colors shadow-lg uppercase text-xs tracking-widest">
+          Entendido, revisar
+        </button>
       </div>
     </div>
   }

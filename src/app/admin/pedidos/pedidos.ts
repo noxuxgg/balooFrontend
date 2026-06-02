@@ -27,7 +27,7 @@ export class Pedidos {
   // Control de Modal e IDs
   isOpen = false;
   confirmarEliminarOpen = signal(false);
-  idParaEliminar: number | null = null;
+  advertenciaOpen = signal({ abierto: false, titulo: '', mensaje: '' });idParaEliminar: number | null = null;
   idPedidoSeleccionado = '';
 
   // Paginación
@@ -50,12 +50,13 @@ export class Pedidos {
     adelanto:         new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
     saldo:            new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
     observaciones:    new FormControl(''),
+    estadoEntrega:    new FormControl<number>(1, [Validators.required]),
+    estadoPago:       new FormControl<number>(1, [Validators.required]),
     estado:           new FormControl<boolean>(true),
   });
 
   constructor() {
     this.listarTodo();
-    // Carga el usuario autenticado automáticamente, igual que en ventas
     this.authService.funGetPerfil().subscribe((perfil: any) => {
       this.usuarioActualId.set(perfil.id);
       this.usuarioActualNombre.set(perfil.nombreUsuario);
@@ -65,10 +66,21 @@ export class Pedidos {
       const ade = val.adelanto || 0;
       const calculoSaldo = tot - ade;
 
+      // Determinar el estado de pago automático
+      let autoEstadoPago = 1; // Por Pagar
+      if (tot > 0 && calculoSaldo === 0) {
+        autoEstadoPago = 3; // Pagado
+      } else if (ade > 0 && calculoSaldo > 0) {
+        autoEstadoPago = 2; // Pago Parcial
+      }
+
       this.pedidoForm.patchValue(
-        { saldo: calculoSaldo > 0 ? calculoSaldo : 0},
+        { 
+          saldo: calculoSaldo > 0 ? calculoSaldo : 0,
+          estadoPago: autoEstadoPago
+        },
         { emitEvent: false }
-      )
+      );
     });
   }
 
@@ -95,8 +107,12 @@ listarTodo() {
 
   // --- PAGINACIÓN ---
   pedidosPaginados = computed(() => {
+    const pedidosOrdenados = [...this.pedidos()].sort((a,b) => {
+      return new Date(a.fechaEntrega).getTime() - new Date(b.fechaEntrega).getTime();
+    });
     const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
-    return this.pedidos().slice(inicio, inicio + this.itemsPorPagina);
+    const fin = inicio + this.itemsPorPagina;
+    return pedidosOrdenados.slice(inicio, fin);
   });
 
   totalPaginas = computed(() =>
@@ -118,7 +134,11 @@ listarTodo() {
   guardarPedido() {
     if (this.pedidoForm.invalid) {
       this.pedidoForm.markAllAsTouched();
-      alert('Por favor, completa todos los campos requeridos correctamente.');
+      this.advertenciaOpen.set({
+        abierto: true,
+        titulo: 'Campos Incompletos',
+        mensaje: 'Por favor, rellena todos los campos obligatorios resaltados en rojo antes de continuar.'
+      });
       return;
     }
 
@@ -137,6 +157,8 @@ listarTodo() {
       adelanto:         Number(v.adelanto),
       saldo:            Number(v.saldo),
       observaciones:    v.observaciones ?? '',
+      estadoEntrega:    Number(v.estadoEntrega ?? 1),
+      estadoPago:       Number(v.estadoPago ?? 1),
       estado:           v.estado ?? true,
     };
 
@@ -179,6 +201,38 @@ listarTodo() {
   }
 }
 
+marcarComoEntregado(pedido: any) {
+    if (Number(pedido.estadoPago) !== 3) {
+      this.advertenciaOpen.set({
+        abierto: true,
+        titulo: 'Saldo Pendiente',
+        mensaje: 'No se puede entregar el pedido porque aún no ha sido pagado por completo. Registra el pago total antes de despacharlo.'
+      }); 
+      return;
+    }
+    const datosActualizar = {
+      clienteId: Number(pedido.cliente?.id ?? pedido.clienteId),
+      usuarioId: pedido.usuario?.id ?? pedido.usuarioId,
+      sucursalId: Number(pedido.sucursal?.id ?? pedido.sucursalId),
+      fechaPedido: this.formatDate(pedido.fechaPedido),
+      fechaEntrega: this.formatDate(pedido.fechaEntrega),
+      horaEntrega: pedido.horaEntrega ?? '',
+      cantidadPersonas: Number(pedido.cantidadPersonas),
+      lugarEntrega: pedido.lugarEntrega ?? '',
+      total: Number(pedido.total),
+      adelanto: Number(pedido.adelanto),
+      saldo: Number(pedido.saldo),
+      observaciones: pedido.observaciones ?? '',
+      estadoEntrega: 3, 
+      estadoPago: Number(pedido.estadoPago),
+      estado: pedido.estado ?? true,
+    };
+    this.pedidoService.funEditarPedido(datosActualizar as any, Number(pedido.id)).subscribe({
+      next: () => this.listarTodo(),
+      error: (err) => console.error('Error al marcar como entregado:', err)
+    });
+  }
+
   mostrarPedido(datos: any) {
     this.idPedidoSeleccionado = datos.id;
     this.pedidoForm.patchValue({
@@ -193,6 +247,8 @@ listarTodo() {
       adelanto:         datos.adelanto,
       saldo:            datos.saldo,
       observaciones:    datos.observaciones,
+      estadoEntrega:    datos.estadoEntrega ?? 1,
+      estadoPago:       datos.estadoPago ?? 1,
       estado:           datos.estado,
     });
     this.isOpen = true;
@@ -205,7 +261,7 @@ listarTodo() {
 
   resetForm() {
     this.listarTodo();
-    this.pedidoForm.reset({ estado: true });
+    this.pedidoForm.reset({ estadoEntrega: 1, estadoPago: 1, estado: true });
     this.idPedidoSeleccionado = '';
     this.isOpen = false;
     this.paginaActual.set(1);
@@ -219,6 +275,8 @@ listarTodo() {
     
     this.pedidoForm.reset({
       fechaPedido: hoy,
+      estadoEntrega: 1,
+      estadoPago: 1,
       estado: true,
       clienteId: null,
       sucursalId: null,
