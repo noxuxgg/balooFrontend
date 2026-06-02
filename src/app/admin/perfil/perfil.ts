@@ -24,4 +24,20 @@ export class Perfil {
     localStorage.removeItem("access_token");
     this.router.navigate(["/auth/login"]);
   }
+
+  fechaActual: string = '';
+
+  ngOnInit() {
+    this.formatFechaHoy();
+  }
+
+  private formatFechaHoy() {
+    const opciones: Intl.DateTimeFormatOptions = { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    this.fechaActual = new Date().toLocaleDateString('es-ES', opciones);
+  }
 }

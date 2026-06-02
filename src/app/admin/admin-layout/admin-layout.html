@@ -1,4 +1,3 @@
-
 <div class="flex h-screen bg-gray-100 font-sans">
   <aside class="w-64 bg-[#013924] text-white flex flex-col shadow-xl">
     
@@ -23,18 +22,21 @@
       <a routerLink="pedidos" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
         Pedidos
       </a>
-      <a routerLink="stock" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-        Inventario
-      </a>
-      <a routerLink="usuarios" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-        Usuarios
-      </a>
-      <a routerLink="reportes" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-        Reportes
-      </a>
-      <a routerLink="sucursales" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-        Sucursales
-      </a>
+
+      @if (!esVendedor()) {
+        <a routerLink="stock" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+          Inventario
+        </a>
+        <a routerLink="usuarios" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+          Usuarios
+        </a>
+        <a routerLink="reportes" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+          Reportes
+        </a>
+        <a routerLink="sucursales" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+          Sucursales
+        </a>
+      }
     </nav>
 
     <div class="p-6 border-t border-white/10">
