@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { JsonPipe, DatePipe } from '@angular/common';
 import { PedidoService } from '../../core/services/pedidos.service';
 import { AuthService } from '../../core/services/auth.service';
+import { Pedido } from '../../core/interfaces/pedido';
 
 @Component({
   selector: 'app-pedidos',
@@ -34,7 +35,6 @@ export class Pedidos {
   paginaActual   = signal(1);
   itemsPorPagina = 5;
 
-  // Formulario Pedido — todos los selects como string (igual que ventas)
   pedidoForm = new FormGroup({
     clienteId:        new FormControl<number | null>(null,  [Validators.required]),
     sucursalId:       new FormControl<number | null>(null,  [Validators.required]),
@@ -62,8 +62,8 @@ export class Pedidos {
       this.usuarioActualNombre.set(perfil.nombreUsuario);
     });
     this.pedidoForm.valueChanges.subscribe(val =>{
-      const tot = val.total || 0;
-      const ade = val.adelanto || 0;
+      const tot = Number(val.total) || 0;
+      const ade = Number(val.adelanto) || 0;
       const calculoSaldo = tot - ade;
 
       // Determinar el estado de pago automático
@@ -91,14 +91,14 @@ listarTodo() {
   });
   this.pedidoService.funListarCliente().subscribe({
     next: (res: any) => {
-      console.log('Clientes:', res);  // ← ¿llegan datos aquí?
+      console.log('Clientes:', res); 
       this.clientes.set(res);
     },
-    error: (err) => {console.error('Error clientes:', err); }  // ← ¿hay error?
+    error: (err) => {console.error('Error clientes:', err); } 
   });
   this.pedidoService.funListarSucursal().subscribe({
     next: (res: any) => {
-      console.log('Sucursales:', res);  // ← ¿llegan datos aquí?
+      console.log('Sucursales:', res); 
       this.sucursales.set(res);
     },
     error: (err) => {console.error('Error sucursales:', err); }
@@ -106,13 +106,16 @@ listarTodo() {
 }
 
   // --- PAGINACIÓN ---
-  pedidosPaginados = computed(() => {
-    const pedidosOrdenados = [...this.pedidos()].sort((a,b) => {
+  pedidosOrdenados=computed(() => {
+    return [...this.pedidos()].sort((a,b) => {
       return new Date(a.fechaEntrega).getTime() - new Date(b.fechaEntrega).getTime();
     });
-    const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
-    const fin = inicio + this.itemsPorPagina;
-    return pedidosOrdenados.slice(inicio, fin);
+  });
+
+  pedidosPaginados=computed(() => {
+    const inicio=(this.paginaActual() - 1) * this.itemsPorPagina;
+    const fin=inicio + this.itemsPorPagina;
+    return this.pedidosOrdenados().slice(inicio, fin);
   });
 
   totalPaginas = computed(() =>
@@ -146,7 +149,7 @@ listarTodo() {
 
     const datosEnvio = {
       clienteId:        Number(v.clienteId),
-      usuarioId:        this.usuarioActualId(),   // viene del auth, no del form
+      usuarioId:        this.usuarioActualId(), 
       sucursalId:       Number(v.sucursalId),
       fechaPedido:      v.fechaPedido ?? '',
       fechaEntrega:     v.fechaEntrega ?? '',
@@ -201,8 +204,11 @@ listarTodo() {
   }
 }
 
-marcarComoEntregado(pedido: Record<string,any>) {
-    if (Number(pedido['estadoPago']) !== 3) {
+marcarComoEntregado(pedido: Pedido) {
+    const p: any=pedido;
+    const pago=Number(p.estadoPago);
+    
+    if (pago !== 3) {
       this.advertenciaOpen.set({
         abierto: true,
         titulo: 'Saldo Pendiente',
@@ -210,26 +216,35 @@ marcarComoEntregado(pedido: Record<string,any>) {
       }); 
       return;
     }
-    const datosActualizar = {
-      clienteId: Number(pedido['clienteId'] ?? pedido['cliente']?.['id']),
-      usuarioId: pedido['usuarioId'] ?? pedido['usuario']?.['id'],
-      sucursalId: Number(pedido['sucursalId'] ?? pedido['sucursal']?.['id']),
-      fechaPedido: this.formatDate(pedido['fechaPedido']),
-      fechaEntrega: this.formatDate(pedido['fechaEntrega']),
-      horaEntrega: pedido['horaEntrega'] ?? '',
-      cantidadPersonas: Number(pedido['cantidadPersonas']),
-      lugarEntrega: pedido['lugarEntrega'] ?? '',
-      total: Number(pedido['total']),
-      adelanto: Number(pedido['adelanto']),
-      saldo: Number(pedido['saldo']),
-      observaciones: pedido['observaciones'] ?? '',
+
+    const datosActualizar: any={
+      ...p,
+      clienteId: Number(p.cliente?.id ?? p.clienteId),
+      usuarioId: p.usuario?.id ?? p.usuarioId,
+      sucursalId: Number(p.sucursal?.id ?? p.sucursalId),
+      fechaPedido: this.formatDate(p.fechaPedido),
+      fechaEntrega: this.formatDate(p.fechaEntrega),
+      horaEntrega: p.horaEntrega ?? '',
+      cantidadPersonas: Number(p.cantidadPersonas),
+      lugarEntrega: p.lugarEntrega ?? '',
+      total: Number(p.total),
+      adelanto: Number(p.adelanto),
+      saldo: Number(p.saldo),
+      observaciones: p.observaciones ?? '',
       estadoEntrega: 3, 
-      estadoPago: Number(pedido['estadoPago']),
-      estado: pedido['estado'] ?? true,
+      estadoPago: pago,
+      estado: p.estado ?? true,
     };
-    this.pedidoService.funEditarPedido(datosActualizar as any, Number(pedido['id'])).subscribe({
-      next: () => this.listarTodo(),
-      error: (err) => console.error('Error al marcar como entregado:', err)
+
+    const idPedido=Number(p.id);
+
+    this.pedidoService.funEditarPedido(datosActualizar, idPedido).subscribe({
+      next: () => {
+        this.listarTodo();
+      },
+      error: (err) => {
+        console.error('Error al marcar como entregado:', err);
+      }
     });
   }
 
