@@ -6,6 +6,7 @@ import { SucursalService } from '../../core/services/sucursales.service';
 import { PedidoService } from '../../core/services/pedidos.service';
 import { VentasService } from '../../core/services/ventas.service';
 import { StockService } from '../../core/services/stock.service';
+import { GastosService } from '../../core/services/gastos.service';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
@@ -24,6 +25,7 @@ export class Reportes {
   ventasService = inject(VentasService);
   sucursalService = inject(SucursalService);
   stockService = inject(StockService);
+  gastosService = inject(GastosService);
 
   private lineCanvas = viewChild<ElementRef<HTMLCanvasElement>>('lineChartCanvas');
   private barCanvas = viewChild<ElementRef<HTMLCanvasElement>>('barChartCanvas');
@@ -33,12 +35,15 @@ export class Reportes {
   ventaMensual = signal<number>(0);
   ventasHoy = signal<number>(0);
   totalPedidos = signal<number>(0);
+  totalEgresos = signal<number>(0);
+  ganancias = signal<number>(0);
   alertasStock = signal<number>(0);
   sucursales = signal<any>([]);
 
   listaPedidos: any[] = [];
   listaVentas: any[] = [];
   listaStocks: any[] = [];
+  listaGastos: any[] = [];
 
   filtrosForm = new FormGroup({
     sucursal: new FormControl('todas'),
@@ -49,7 +54,6 @@ export class Reportes {
   constructor() {
     this.cargarDatosIniciales();
     this.listarSucursales();
-
   }
 
   obtenerPrimerDiaMes(): string {
@@ -84,7 +88,14 @@ export class Reportes {
         this.stockService.funListar().subscribe({
           next: (stocks: any) => {
             this.listaStocks = stocks;
-            this.calcularReporte();
+
+            this.gastosService.funListar().subscribe({
+              next: (gastos: any) => {
+                this.listaGastos = gastos;
+                this.calcularReporte();
+              },
+              error: (err) => console.error('ERROR AL CARGAR GASTOS:', err)
+            });
           },
           error: (err) => console.error('ERROR AL CARGAR STOCK:', err)
         });
@@ -99,8 +110,10 @@ export class Reportes {
     let contadorPedidos = 0;
     let ingresosMensuales = 0;
     let ingresosHoy = 0;
+    let egresosRango = 0;
     let contadorAlertas = 0;
     const sucursalFiltro = valores.sucursal;
+
     for (let p of this.listaPedidos) {
       let fechaP: string | null = null;
 
@@ -137,6 +150,7 @@ export class Reportes {
         ingresosHoy = ingresosHoy + totalPedido;
       }
     }
+
     for (let v of this.listaVentas) {
       let fechaV: string | null = null;
 
@@ -177,6 +191,38 @@ export class Reportes {
         ingresosHoy = ingresosHoy + totalVenta;
       }
     }
+
+    for (let g of this.listaGastos) {
+      let fechaG: string | null = null;
+
+      if (g.fecha) {
+        const fechaTexto = String(g.fecha).split('T')[0].trim();
+        const d = new Date(fechaTexto.replace(/-/g, '\/'));
+        if (!isNaN(d.getTime())) {
+          const anio = d.getFullYear();
+          const mes = String(d.getMonth() + 1).padStart(2, '0');
+          const dia = String(d.getDate()).padStart(2, '0');
+          fechaG = `${anio}-${mes}-${dia}`;
+        }
+      }
+
+      let cumpleSucursal = sucursalFiltro === 'todas';
+      if (!cumpleSucursal) {
+        const idSucursalGasto = g.sucursal && typeof g.sucursal === 'object'
+          ? g.sucursal.id
+          : (g.sucursalId || g.sucursal_id || g.sucursal);
+        cumpleSucursal = Number(idSucursalGasto) === Number(sucursalFiltro);
+      }
+
+      const cumpleInicio = !valores.fechaInicio || !fechaG || fechaG >= valores.fechaInicio;
+      const cumpleFin = !valores.fechaFin || !fechaG || fechaG <= valores.fechaFin;
+
+      if (cumpleSucursal && cumpleInicio && cumpleFin) {
+        const montoGasto = Number(g.monto) || 0;
+        egresosRango += montoGasto;
+      }
+    }
+
     for (let s of this.listaStocks) {
       const idSucursalStock = s.sucursal && typeof s.sucursal === 'object'
         ? s.sucursal.id
@@ -190,10 +236,14 @@ export class Reportes {
         }
       }
     }
+
     this.totalPedidos.set(contadorPedidos);
     this.ventaMensual.set(ingresosMensuales);
     this.ventasHoy.set(ingresosHoy);
+    this.totalEgresos.set(egresosRango);
+    this.ganancias.set(ingresosMensuales - egresosRango);
     this.alertasStock.set(contadorAlertas);
+
     this.renderizarGraficoTendencia(valores.sucursal, valores.fechaInicio, valores.fechaFin);
     this.renderizarGraficoComparativo(valores.fechaInicio, valores.fechaFin);
   }
@@ -218,7 +268,7 @@ export class Reportes {
         const cumpleFin = !fin || fechaStr <= fin;
 
         if (cumpleSucursal && cumpleInicio && cumpleFin) {
-          const total = Number(item.total) || 0;
+          const total = Number(item.total || item.monto) || 0;
           mapaTendencia[fechaStr] = (mapaTendencia[fechaStr] || 0) + total;
         }
       }
@@ -297,5 +347,4 @@ export class Reportes {
       }
     });
   }
-
 }

@@ -10,6 +10,7 @@ import { Stock } from './admin/stock/stock';
 import { Reportes } from './admin/reportes/reportes';
 import { Sucursales } from './admin/sucursales/sucursales';
 import { AdminLayout } from './admin/admin-layout/admin-layout';
+import { Gastos } from './admin/gastos/gastos';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
@@ -30,6 +31,7 @@ export const routes: Routes = [
             { path: 'stock', component: Stock },
             { path: 'reportes', component: Reportes },
             { path: 'sucursales', component: Sucursales },
+            { path: 'gastos', component: Gastos },
             { path: '', redirectTo: 'perfil', pathMatch: 'full' }
         ]
     },

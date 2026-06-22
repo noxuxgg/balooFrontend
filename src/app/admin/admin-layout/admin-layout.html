@@ -1,41 +1,54 @@
 <div class="flex h-screen bg-gray-100 font-sans">
   <aside class="w-64 bg-[#013924] text-white flex flex-col shadow-xl">
-    
+
     <div class="p-8">
       <h1 class="text-2xl font-bold tracking-tight">Baloo</h1>
       <p class="text-[10px] uppercase tracking-widest opacity-60">Repostería</p>
     </div>
 
     <nav class="flex-1 px-4 space-y-1">
-      <a routerLink="perfil" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+      <a routerLink="perfil" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
         Inicio
       </a>
-      <a routerLink="clientes" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+      <a routerLink="clientes" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
         Clientes
       </a>
-      <a routerLink="productos" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+      <a routerLink="productos" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
         Productos
       </a>
-      <a routerLink="ventas" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+      <a routerLink="ventas" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
         Ventas
       </a>
-      <a routerLink="pedidos" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+      <a routerLink="pedidos" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
         Pedidos
       </a>
 
       @if (!esVendedor()) {
-        <a routerLink="stock" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-          Inventario
-        </a>
-        <a routerLink="usuarios" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-          Usuarios
-        </a>
-        <a routerLink="reportes" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-          Reportes
-        </a>
-        <a routerLink="sucursales" routerLinkActive="bg-white/10" class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
-          Sucursales
-        </a>
+      <a routerLink="stock" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+        Inventario
+      </a>
+      <a routerLink="usuarios" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+        Usuarios
+      </a>
+      <a routerLink="reportes" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+        Reportes
+      </a>
+      <a routerLink="sucursales" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+        Sucursales
+      </a>
+      <a routerLink="gastos" routerLinkActive="bg-white/10"
+        class="block py-2.5 px-4 rounded-lg transition-all hover:bg-white/5">
+        Gastos
+      </a>
       }
     </nav>
 
@@ -43,7 +56,8 @@
       <div class="flex flex-col mb-4">
         <span class="text-sm font-semibold"> {{ miPerfil().nombreUsuario }}</span>
       </div>
-      <button class="w-full bg-white/10 hover:bg-red-500/20 text-white text-sm py-2 px-4 rounded-md transition-all" (click)="funSalir()">
+      <button class="w-full bg-white/10 hover:bg-red-500/20 text-white text-sm py-2 px-4 rounded-md transition-all"
+        (click)="funSalir()">
         Cerrar Sesión
       </button>
       <pre class="text-white text-xs"></pre>
