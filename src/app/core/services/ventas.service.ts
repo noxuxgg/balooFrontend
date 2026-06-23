@@ -16,7 +16,7 @@ export class VentasService {
     return this.http.post(`${this.urlBase}/ventas`, dato);
   }
 
-  funEditar(dato: any, id: number) {                              //  agregado
+  funEditar(dato: any, id: number) {
     return this.http.patch(`${this.urlBase}/ventas/${id}`, dato);
   }
 
@@ -30,5 +30,9 @@ export class VentasService {
 
   funListarSucursales() {
     return this.http.get<any[]>(`${this.urlBase}/sucursales`);
+  }
+
+  funListarStock() {
+    return this.http.get<any[]>(`${this.urlBase}/stock`);
   }
 }
