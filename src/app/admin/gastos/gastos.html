@@ -61,7 +61,7 @@
                     <div class="relative">
                         <label
                             class="text-[10px] font-black text-[#013924] uppercase tracking-widest absolute -top-2 left-2 bg-white px-1">Monto
-                            ($)</label>
+                            (Bs)</label>
                         <input formControlName="monto" type="number" step="0.01"
                             class="w-full border-2 border-gray-100 focus:border-[#013924] p-3 rounded-xl outline-none">
                         @if (gastoForm.get('monto')?.invalid && gastoForm.get('monto')?.touched) {
@@ -102,21 +102,6 @@
                     @if (gastoForm.get('motivo')?.invalid && gastoForm.get('motivo')?.touched) {
                     <span class="text-[10px] text-red-500 font-bold mt-1 ml-2">El motivo es obligatorio</span>
                     }
-                </div>
-
-                <div class="row mb-3" [formGroup]="gastoForm">
-                    <div class="col-8">
-                        <label class="form-label" style="font-size: 11px; font-weight: bold; color: #004d40;">USUARIO
-                            ACTIVO</label>
-                        <input type="text" class="form-control" formControlName="nombreUsuario"
-                            style="background-color: #f5f5f5; color: #555;" readonly>
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label" style="font-size: 11px; font-weight: bold; color: #004d40;">ID
-                            USUARIO</label>
-                        <input type="text" class="form-control" formControlName="usuarioId"
-                            style="background-color: #f5f5f5; color: #555; text-align: center;" readonly>
-                    </div>
                 </div>
                 @if (errorServidor()) {
                 <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl animate-pulse">
